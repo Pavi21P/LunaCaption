@@ -135,6 +135,14 @@ Each run copies the exact frozen manifest and writes report.json incrementally u
 
 review-template.json contains successful captions in the specified review order, with every human-rating field blank. Save actual human ratings in a separate private copy; the runner does not infer ratings or import completed reviews. Its human-review summary therefore remains pending. A later reviewed summary must follow the rubric above.
 
+To rate captions, build a private review page next to the template and open it in a browser:
+
+~~~powershell
+.\.venv\Scripts\python.exe scripts\make_review_page.py ".local\evaluation\v1\baseline-01\review-template.json" --image-root "..\Flickr8k_Dataset\Flicker8k_Dataset"
+~~~
+
+The page shows one image and its generated caption at a time (never the references), records the rubric above, keeps progress in the browser, and updates the summary as you go. **Export review JSON** downloads the completed ratings with that summary; keep the file private beside the run. The page only records what a reviewer enters.
+
 Reports include source-file hashes alongside the Git commit/dirty flag so a run made before the checkpoint commit can be matched to its final source. Record protocol and dependency hashes too. Review aggregate values before copying them into public documentation; never publish the raw report, manifest, reference captions, or review template.
 
 ## Baseline results (2026-11-05)

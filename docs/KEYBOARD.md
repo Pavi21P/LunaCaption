@@ -33,6 +33,17 @@ or completion returns disabled-control focus to the queue. A batch completing wh
 you edit another caption leaves your focus in the editor. Clearing returns to Add
 images. Existing save/discard/cancel and recovery protections still apply.
 
+## Screen readers: not supported yet
+
+The app is keyboard-operable, but screen readers cannot read it. Inspecting the
+running window with Windows UI Automation (2026-11-24) found 50 elements, every one
+exposed as an unnamed, unfocusable pane: buttons, the queue, and the caption editor
+have no accessible names or roles, so Narrator or NVDA cannot announce them. This
+is a limitation of the Tk 8.6 toolkit bundled with Python, not of individual
+widgets, and labels or styling inside the app cannot fix it. Real screen-reader
+support needs a UI toolkit with Windows accessibility support (for example Qt or
+wxPython). Until then, do not describe the app as screen-reader accessible.
+
 ## Verification boundary
 
 Automated Windows Tk tests use real mapped widgets and generated key events.
@@ -43,13 +54,13 @@ replacement, modal grabs, and undo. They also check that every interactive contr
 remains mapped and inside the client height at the 960 by 680 minimum window size.
 
 These checks do not replace a person's keyboard-only walkthrough, testing native
-file-dialog navigation, screen-reader announcements, high-contrast mode, high-DPI
-layouts, or manual visual acceptance; use the walkthrough below for those.
+file-dialog navigation, high-contrast mode, high-DPI layouts, or manual visual
+acceptance; use the walkthrough below for those.
 
-## Manual accessibility walkthrough
+## Manual keyboard walkthrough
 
 1. Start the source app. Use Tab and Shift+Tab to reach each enabled control.
-   Check that focus is visible and labels make sense with Windows assistive technology.
+   Check that focus is always visible and lands where you expect.
 2. Use Ctrl+I and navigate the native file dialog using only the keyboard. Add two
    local test images, move between them with arrows, and start with Ctrl+Enter.
 3. Cancel with Esc, then generate remaining rows. Confirm focus stays usable during
@@ -58,6 +69,6 @@ layouts, or manual visual acceptance; use the walkthrough below for those.
    in both directions without inserting unwanted whitespace.
 5. Export with Ctrl+E, save with Ctrl+S, and reopen with Ctrl+O. Change a caption
    and cancel the replacement prompt; verify the edit remains.
-6. Record the Windows version, display scaling, assistive technology/version,
-   observed announcements/focus/errors, and any fixes needed. Do not record a pass
+6. Record the Windows version, display scaling, observed focus problems or errors,
+   and any fixes needed. Do not record a pass
    until a tester has actually performed the walkthrough.

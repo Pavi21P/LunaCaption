@@ -92,6 +92,25 @@ $exe = ".\dist\LunaCaption-0.1.0-win64\LunaCaption\LunaCaption-CLI.exe"
 A successful build or a running process alone is not proof the package works; test
 actual model loading and caption generation before calling a build usable.
 
+## Latest verified build (2026-11-24)
+
+Built on Windows 10 Home x64 (Intel Core i5-7200U, 8 GB RAM) from the LunaCaption
+source with the pinned recipe: about 6 minutes, 621.6 MiB output, `build-info.json`
+written. The build ran at below-normal priority with a free-memory watchdog; free RAM
+never fell below 2.16 GiB.
+
+| Check | Result |
+| --- | --- |
+| `LunaCaption-CLI.exe --help` / `--diagnose` | Exit 0 / exit 0, all checks OK |
+| CLI `--verify-package --desktop`, 2 photos in a folder with spaces | Pass: offline, 0 network attempts, desktop worker and CSV/JSON exports verified, inputs unchanged |
+| `LunaCaption.exe` (windowed) `--verify-package`, second offline launch | Pass, same checks and identical captions |
+| Captions vs. the source app | Identical |
+| Empty model cache with `--offline` | Exit 2 with a clear "connect once to download" message; `--diagnose` exits 1 and names the fix |
+| Executable icon | LunaCaption crescent embedded |
+
+Not yet verified: a clean Windows machine without the development tools, a fresh
+model download through the packaged CLI, and real NVIDIA GPU execution.
+
 ## Build choices and limits
 
 The [PyInstaller spec](https://pyinstaller.org/en/stable/spec-files.html) shares one

@@ -43,6 +43,7 @@ If setup can't find Python, add `-PythonExe "C:\Path\To\python.exe"`.
 ## Good to know
 
 - BLIP can miss details or get things wrong, so check captions before using them as alt text.
+- The app is fully keyboard-operable, but screen readers can't read it yet; this is a limit of the Tk toolkit ([details](docs/KEYBOARD.md#screen-readers-not-supported-yet)).
 - On a 50-image Flickr8k sample it scored BLEU-4 21.46 and ROUGE-L 47.21 ([details](docs/EVALUATION.md)).
 - More docs: [sessions](docs/SESSIONS.md) · [keyboard](docs/KEYBOARD.md) · [GPU](docs/DEVICES.md) · [building an .exe](docs/PACKAGING.md)
 
