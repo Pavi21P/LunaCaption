@@ -1,5 +1,5 @@
 param(
-    [string]$BuildName = "LumaCaption-0.1.0-win64",
+    [string]$BuildName = "LunaCaption-0.1.0-win64",
     [switch]$InstallBuildTools,
     [switch]$CheckOnly
 )

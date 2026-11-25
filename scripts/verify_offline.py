@@ -17,10 +17,10 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-from lumacaption.batch import run_batch
-from lumacaption.engine import CaptionEngine, CaptionOptions, default_cache
-from lumacaption.exporting import export_results
-from lumacaption.images import collect_images
+from lunacaption.batch import run_batch
+from lunacaption.engine import CaptionEngine, CaptionOptions, default_cache
+from lunacaption.exporting import export_results
+from lunacaption.images import collect_images
 
 
 def digest(path: Path) -> str:
@@ -65,7 +65,7 @@ def main() -> None:
         engine.prepare()
         assert engine._model is model, "The loaded model should be reused."
 
-        with tempfile.TemporaryDirectory(prefix="lumacaption-verify-") as directory:
+        with tempfile.TemporaryDirectory(prefix="lunacaption-verify-") as directory:
             json_path = Path(directory) / "captions.json"
             csv_path = Path(directory) / "captions.csv"
             export_results(results, json_path)
@@ -80,7 +80,7 @@ def main() -> None:
         if args.desktop:
             import tkinter as tk
 
-            from lumacaption.desktop import CaptionApp
+            from lunacaption.desktop import CaptionApp
 
             root = tk.Tk()
             root.withdraw()
@@ -89,7 +89,7 @@ def main() -> None:
             errors: list[str] = []
             try:
                 with patch(
-                    "lumacaption.desktop.messagebox.showerror",
+                    "lunacaption.desktop.messagebox.showerror",
                     lambda title, message, **kwargs: errors.append(message),
                 ):
                     app.add_paths([paths[0]])

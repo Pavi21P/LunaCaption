@@ -12,17 +12,34 @@ from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 
 from .batch import CaptionResult, run_batch
+from .branding import (
+    CARD,
+    DANGER,
+    LINE,
+    MIST,
+    MUTED,
+    NIGHT,
+    PLUM,
+    SOFT,
+    VIOLET,
+    WASH,
+    app_icon,
+    logo_mark,
+)
 from .engine import DEVICES, LENGTHS, CaptionEngine, CaptionOptions
 from .exporting import export_results
 from .images import MAX_BATCH, SUPPORTED_SUFFIXES, ImageInputError, collect_images, load_image
 from .recovery import RecoveryStore, default_recovery_directory
 from .sessions import Session, load_session, save_session
 
-BG = "#f3f5f7"
-INK = "#152a36"
-MUTED = "#576b78"
-ACCENT = "#087f75"
-PANEL = "#ffffff"
+FONT = "Segoe UI"
+HEADING = "Segoe UI Semibold"
+DISABLED_TEXT = "#a49cc4"
+EDITOR_BG = "#f7f4fc"
+SESSION_TYPES = [
+    ("LunaCaption session", "*.lunacaption.json *.lumacaption.json"),
+    ("JSON", "*.json"),
+]
 AUTOSAVE_DELAY_MS = 1000
 
 
@@ -75,56 +92,31 @@ class CaptionApp:
         self.root.after_idle(self._initial_focus)
 
     def _build(self) -> None:
-        self.root.title("LumaCaption")
+        self.root.title("LunaCaption")
         self.root.geometry("1160x780")
         self.root.minsize(960, 680)
-        self.root.configure(bg=BG)
+        self.root.configure(bg=MIST)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
-        self.root.option_add("*Font", ("Segoe UI", 10))
-        style = ttk.Style(self.root)
-        style.theme_use("clam")
-        style.configure(".", font=("Segoe UI", 10))
-        style.configure("TFrame", background=BG)
-        style.configure("Card.TFrame", background=PANEL)
-        style.configure("TLabel", background=BG, foreground=INK)
-        style.configure("Muted.TLabel", foreground=MUTED)
-        style.configure("Card.TLabel", background=PANEL, foreground=INK)
-        style.configure("TButton", padding=(13, 9), background="#e4ebee", foreground=INK)
-        style.map("TButton", background=[("active", "#d5e2e6")])
-        style.configure("Primary.TButton", background=ACCENT, foreground="white")
-        style.map("Primary.TButton", background=[("disabled", "#9caeb1"), ("active", "#05655d")])
-        style.configure("TCheckbutton", background=BG, foreground=INK)
-        style.configure(
-            "Treeview",
-            rowheight=36,
-            background=PANEL,
-            fieldbackground=PANEL,
-            foreground=INK,
-            borderwidth=0,
-        )
-        style.configure("Treeview.Heading", background="#e7edf0", foreground=INK, padding=8)
-        style.map("Treeview", background=[("selected", "#d9efea")], foreground=[("selected", INK)])
-        style.configure("Horizontal.TProgressbar", background=ACCENT, troughcolor="#dfe7ea")
+        self._apply_theme()
+        self.icon_images = [
+            ImageTk.PhotoImage(app_icon(size), master=self.root) for size in (16, 32, 48, 64)
+        ]
+        self.root.iconphoto(True, *self.icon_images)
+        self.logo_image = ImageTk.PhotoImage(logo_mark(42), master=self.root)
+        self.empty_image = ImageTk.PhotoImage(logo_mark(88), master=self.root)
+        # A 1x1 transparent stand-in keeps the placeholder in pixel sizing when the
+        # logo is hidden, so the label still requests no space of its own.
+        self.blank_image = tk.PhotoImage(master=self.root, width=1, height=1)
 
-        header = tk.Frame(self.root, bg=INK, padx=28, pady=20)
+        header = tk.Frame(self.root, bg=CARD, padx=24, pady=10)
         header.pack(fill="x")
-        tk.Label(
-            header, text="LumaCaption", bg=INK, fg="white", font=("Segoe UI Semibold", 24)
-        ).pack(side="left")
-        tk.Label(
-            header, text="YOUR PHOTOS, PUT INTO WORDS", bg=INK, fg="#a5d4cd", font=("Segoe UI", 10)
-        ).pack(side="left", padx=24)
-        tk.Label(
-            header,
-            textvariable=self.compute_status,
-            bg="#23424b",
-            fg="#bde8d9",
-            padx=12,
-            pady=6,
-            font=("Segoe UI Semibold", 9),
-        ).pack(side="right")
+        tk.Frame(self.root, bg=LINE, height=1).pack(fill="x")
+        tk.Label(header, image=self.logo_image, bg=CARD).pack(side="left")
+        tk.Label(header, text="LunaCaption", bg=CARD, fg=NIGHT, font=(FONT, 19, "bold")).pack(
+            side="left", padx=(12, 0)
+        )
 
-        toolbar = ttk.Frame(self.root, padding=(24, 16))
+        toolbar = ttk.Frame(self.root, padding=(24, 12, 24, 10))
         toolbar.pack(fill="x")
         self.add_button = ttk.Button(toolbar, text="+ Add images", command=self._add_files)
         self.add_button.pack(side="left")
@@ -159,62 +151,72 @@ class CaptionApp:
         body.columnconfigure(0, weight=2, minsize=300)
         body.columnconfigure(1, weight=3, minsize=430)
         body.rowconfigure(0, weight=1)
-        left = ttk.Frame(body)
-        left.grid(row=0, column=0, sticky="nsew", padx=(0, 18))
+        left = ttk.Frame(body, style="Panel.TFrame", padding=14)
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 16))
         left.columnconfigure(0, weight=1)
         left.rowconfigure(2, weight=1)
-        ttk.Label(left, text="IMAGE QUEUE", font=("Segoe UI Semibold", 10)).grid(
-            row=0, column=0, sticky="w"
-        )
-        ttk.Label(left, textvariable=self.summary, style="Muted.TLabel").grid(
-            row=1, column=0, sticky="w", pady=(4, 10)
+        queue_header = ttk.Frame(left, style="Card.TFrame")
+        queue_header.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        ttk.Label(queue_header, text="IMAGE QUEUE", style="Section.TLabel").pack(side="left")
+        ttk.Label(queue_header, textvariable=self.summary, style="CardMuted.TLabel").pack(
+            side="right"
         )
 
-        tree_frame = ttk.Frame(left)
+        tree_frame = ttk.Frame(left, style="Card.TFrame")
         tree_frame.grid(row=2, column=0, sticky="nsew")
         self.tree = ttk.Treeview(
             tree_frame, columns=("image", "state"), show="headings", selectmode="browse", height=11
         )
         self.tree.heading("image", text="Image")
         self.tree.heading("state", text="Status")
-        self.tree.column("image", width=230, minwidth=120)
+        self.tree.column("image", width=150, minwidth=110)
         self.tree.column("state", width=80, minwidth=75, stretch=False)
         self.tree.pack(side="left", fill="both", expand=True)
         scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
         scrollbar.pack(side="right", fill="y")
         self.tree.configure(yscrollcommand=scrollbar.set)
         self.tree.bind("<<TreeviewSelect>>", self._select)
-        self.tree.tag_configure("error", foreground="#b03928")
-        self.tree.tag_configure("done", foreground="#087468")
+        self.tree.tag_configure("error", foreground=DANGER)
+        self.tree.tag_configure("done", foreground=VIOLET)
 
-        options = ttk.Frame(left, padding=(0, 14, 0, 0))
+        options = ttk.Frame(left, style="Card.TFrame", padding=(0, 10, 0, 0))
         options.grid(row=3, column=0, sticky="ew")
         options.columnconfigure(1, weight=1)
-        ttk.Label(options, text="Caption length").grid(row=0, column=0, sticky="w")
+        ttk.Label(options, text="Caption length", style="Card.TLabel").grid(
+            row=0, column=0, sticky="w"
+        )
         self.length_box = ttk.Combobox(
             options, textvariable=self.length, values=list(LENGTHS), state="readonly", width=12
         )
         self.length_box.grid(row=0, column=1, sticky="e")
-        ttk.Label(options, text="Compute device").grid(row=1, column=0, sticky="w", pady=(6, 0))
+        ttk.Label(options, text="Compute device", style="Card.TLabel").grid(
+            row=1, column=0, sticky="w", pady=(6, 0)
+        )
         self.device_box = ttk.Combobox(
             options, textvariable=self.device, values=DEVICES, state="readonly", width=12
         )
         self.device_box.grid(row=1, column=1, sticky="e", pady=(6, 0))
         self.offline_check = ttk.Checkbutton(
-            left, text="Offline — use downloaded model only", variable=self.offline
+            left,
+            text="Offline — use downloaded model only",
+            variable=self.offline,
+            style="Card.TCheckbutton",
         )
-        self.offline_check.grid(row=4, column=0, sticky="w", pady=(12, 6))
-        ttk.Label(
+        self.offline_check.grid(row=4, column=0, sticky="w", pady=(10, 4))
+        model_note = ttk.Label(
             left,
             text="First use downloads about 1 GB. No API key needed.",
-            style="Muted.TLabel",
+            style="CardMuted.TLabel",
             wraplength=340,
-        ).grid(row=5, column=0, sticky="w", pady=(0, 10))
+        )
+        model_note.grid(row=5, column=0, sticky="ew", pady=(0, 10))
+        # Wrap to the column so the note stays readable at the minimum window size.
+        model_note.bind("<Configure>", lambda event: model_note.configure(wraplength=event.width))
         self.generate_button = ttk.Button(
             left, text="Generate captions", style="Primary.TButton", command=self._start
         )
         self.generate_button.grid(row=6, column=0, sticky="ew")
-        actions = ttk.Frame(left)
+        actions = ttk.Frame(left, style="Card.TFrame")
         actions.grid(row=7, column=0, sticky="ew", pady=(8, 0))
         self.retry_button = ttk.Button(actions, text="Retry errors", command=self._retry)
         self.retry_button.pack(side="left")
@@ -223,17 +225,24 @@ class CaptionApp:
         )
         self.cancel_button.pack(side="right")
 
-        right = ttk.Frame(body, style="Card.TFrame", padding=18)
+        right = ttk.Frame(body, style="Panel.TFrame", padding=14)
         right.grid(row=0, column=1, sticky="nsew")
-        ttk.Label(
-            right, text="PREVIEW & CAPTION", style="Card.TLabel", font=("Segoe UI Semibold", 10)
-        ).pack(anchor="w", pady=(0, 10))
+        ttk.Label(right, text="PREVIEW & CAPTION", style="Section.TLabel").pack(
+            anchor="w", pady=(0, 10)
+        )
         self.preview = tk.Label(
             right,
-            text="A little context for every photo.\n\nAdd images to start.",
-            bg="#eaf0f1",
+            text="A little context for every photo.\nAdd images to start.",
+            image=self.empty_image,
+            compound="top",
+            bg=SOFT,
             fg=MUTED,
-            font=("Segoe UI", 13),
+            font=(FONT, 12),
+            wraplength=420,
+            # Request no size of its own (pixels while an image shows): the preview
+            # takes leftover space so caption controls stay visible at the minimum size.
+            width=1,
+            height=1,
         )
         self.preview.pack(fill="both", expand=True)
         self.preview.bind("<Configure>", lambda _: self._draw_preview())
@@ -242,13 +251,13 @@ class CaptionApp:
             text="No image selected",
             style="Card.TLabel",
             wraplength=460,
-            font=("Segoe UI Semibold", 11),
+            font=(HEADING, 11),
         )
-        self.filename.pack(anchor="w", pady=(12, 4))
+        self.filename.pack(anchor="w", pady=(12, 2))
         self.detail = ttk.Label(
             right,
             text="Review and edit generated text before sharing.",
-            style="Card.TLabel",
+            style="CardMuted.TLabel",
             wraplength=460,
         )
         self.detail.pack(anchor="w", pady=(0, 8))
@@ -257,16 +266,19 @@ class CaptionApp:
             right,
             height=4,
             wrap="word",
-            bg="#f6f8f9",
-            fg=INK,
-            insertbackground=ACCENT,
+            bg=EDITOR_BG,
+            fg=NIGHT,
+            insertbackground=VIOLET,
+            selectbackground=WASH,
+            selectforeground=NIGHT,
+            inactiveselectbackground=WASH,
             highlightthickness=2,
-            highlightcolor=ACCENT,
-            highlightbackground="#dfe7ea",
+            highlightcolor=VIOLET,
+            highlightbackground=LINE,
             relief="flat",
             padx=12,
             pady=10,
-            font=("Segoe UI", 12),
+            font=(FONT, 12),
             undo=True,
             state="disabled",
         )
@@ -303,6 +315,156 @@ class CaptionApp:
         ).pack(anchor="w", pady=(3, 0))
         self._bind_keyboard()
         self._update_controls()
+
+    def _apply_theme(self) -> None:
+        """Lavender-and-violet theme matching the LunaCaption logo."""
+        self.root.option_add("*Font", (FONT, 10))
+        self.root.option_add("*TCombobox*Listbox.background", CARD)
+        self.root.option_add("*TCombobox*Listbox.foreground", NIGHT)
+        self.root.option_add("*TCombobox*Listbox.selectBackground", WASH)
+        self.root.option_add("*TCombobox*Listbox.selectForeground", NIGHT)
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+        style.configure(
+            ".",
+            font=(FONT, 10),
+            background=MIST,
+            foreground=NIGHT,
+            bordercolor=LINE,
+            lightcolor=MIST,
+            darkcolor=MIST,
+            troughcolor=WASH,
+            focuscolor=VIOLET,
+            selectbackground=WASH,
+            selectforeground=NIGHT,
+        )
+        style.configure("TFrame", background=MIST)
+        style.configure("Card.TFrame", background=CARD)
+        style.configure(
+            "Panel.TFrame", background=CARD, bordercolor=LINE, relief="solid", borderwidth=1
+        )
+        style.configure("TLabel", background=MIST, foreground=NIGHT)
+        style.configure("Muted.TLabel", foreground=MUTED)
+        style.configure("Card.TLabel", background=CARD, foreground=NIGHT)
+        style.configure("CardMuted.TLabel", background=CARD, foreground=MUTED)
+        style.configure("Section.TLabel", background=CARD, foreground=PLUM, font=(HEADING, 9))
+
+        style.configure(
+            "TButton",
+            padding=(14, 8),
+            background=SOFT,
+            foreground=NIGHT,
+            bordercolor=LINE,
+            lightcolor=SOFT,
+            darkcolor=SOFT,
+            focuscolor=VIOLET,
+        )
+        style.map(
+            "TButton",
+            background=[("disabled", MIST), ("pressed", LINE), ("active", WASH)],
+            lightcolor=[("disabled", MIST), ("pressed", LINE), ("active", WASH)],
+            darkcolor=[("disabled", MIST), ("pressed", LINE), ("active", WASH)],
+            foreground=[("disabled", DISABLED_TEXT)],
+            bordercolor=[("focus", VIOLET)],
+        )
+        style.configure(
+            "Primary.TButton",
+            font=(HEADING, 10),
+            background=VIOLET,
+            foreground="white",
+            bordercolor=VIOLET,
+            lightcolor=VIOLET,
+            darkcolor=VIOLET,
+            focuscolor="white",
+        )
+        style.map(
+            "Primary.TButton",
+            background=[("disabled", WASH), ("pressed", NIGHT), ("active", PLUM)],
+            lightcolor=[("disabled", WASH), ("pressed", NIGHT), ("active", PLUM)],
+            darkcolor=[("disabled", WASH), ("pressed", NIGHT), ("active", PLUM)],
+            bordercolor=[("disabled", WASH), ("focus", NIGHT)],
+            foreground=[("disabled", DISABLED_TEXT)],
+        )
+
+        for name, surface in (("TCheckbutton", MIST), ("Card.TCheckbutton", CARD)):
+            style.configure(
+                name,
+                background=surface,
+                foreground=NIGHT,
+                indicatorbackground=CARD,
+                indicatorforeground="white",
+                focuscolor=VIOLET,
+            )
+            style.map(
+                name,
+                background=[("active", surface)],
+                indicatorbackground=[("disabled", MIST), ("selected", VIOLET), ("pressed", WASH)],
+                foreground=[("disabled", DISABLED_TEXT)],
+            )
+        style.configure(
+            "TCombobox",
+            padding=(8, 4),
+            fieldbackground=CARD,
+            background=SOFT,
+            foreground=NIGHT,
+            arrowcolor=PLUM,
+            bordercolor=LINE,
+            lightcolor=CARD,
+            darkcolor=CARD,
+        )
+        style.map(
+            "TCombobox",
+            fieldbackground=[("disabled", MIST), ("readonly", CARD)],
+            background=[("active", WASH)],
+            foreground=[("disabled", DISABLED_TEXT)],
+            selectbackground=[("readonly", CARD)],
+            selectforeground=[("readonly", NIGHT)],
+            bordercolor=[("focus", VIOLET)],
+            arrowcolor=[("disabled", DISABLED_TEXT)],
+        )
+
+        style.configure(
+            "Treeview",
+            rowheight=32,
+            background=CARD,
+            fieldbackground=CARD,
+            foreground=NIGHT,
+            bordercolor=LINE,
+            lightcolor=CARD,
+            darkcolor=CARD,
+        )
+        style.map("Treeview", background=[("selected", WASH)], foreground=[("selected", NIGHT)])
+        style.configure(
+            "Treeview.Heading",
+            font=(HEADING, 9),
+            background=SOFT,
+            foreground=PLUM,
+            bordercolor=LINE,
+            lightcolor=SOFT,
+            darkcolor=SOFT,
+            padding=(10, 5),
+        )
+        style.map("Treeview.Heading", background=[("active", WASH)])
+        style.configure(
+            "Vertical.TScrollbar",
+            background=SOFT,
+            troughcolor=CARD,
+            bordercolor=CARD,
+            lightcolor=SOFT,
+            darkcolor=SOFT,
+            arrowcolor=PLUM,
+            gripcount=0,
+        )
+        style.map("Vertical.TScrollbar", background=[("active", WASH)])
+        style.configure(
+            "Horizontal.TProgressbar",
+            background=VIOLET,
+            troughcolor=WASH,
+            bordercolor=WASH,
+            lightcolor=VIOLET,
+            darkcolor=VIOLET,
+            thickness=8,
+        )
 
     def _bind_keyboard(self) -> None:
         self.keyboard_controls = (
@@ -555,8 +717,15 @@ class CaptionApp:
             "Review the caption against this image."
         )
 
+    def _fit_placeholder(self) -> None:
+        """Show the logo in the empty preview only when it fits above the text."""
+        roomy = self.preview.winfo_height() >= 145
+        self.preview.configure(image=self.empty_image if roomy else self.blank_image)
+
     def _draw_preview(self) -> None:
         if self.preview_source is None:
+            if self.preview_photo is None and self.preview.cget("image"):
+                self._fit_placeholder()
             return
         image = self.preview_source.copy()
         image.thumbnail(
@@ -713,9 +882,12 @@ class CaptionApp:
                     if not self.batch_error:
                         errors = sum(row.status == "error" for row in self.rows.values())
                         verb = "Cancelled" if self.cancel_event.is_set() else "Finished"
+                        fallback = getattr(self.engine, "fallback_reason", "")
                         self.status.set(
                             f"{verb}: {self.batch_finished} of {self.batch_total} "
-                            f"processed · {errors} error(s). Save the session to keep your work."
+                            f"processed · {errors} error(s). "
+                            + (f"Ran on CPU: {fallback} " if fallback else "")
+                            + "Save the session to keep your work."
                         )
                     self._update_controls()
         except queue.Empty:
@@ -752,7 +924,7 @@ class CaptionApp:
         path = filedialog.asksaveasfilename(
             parent=self.root,
             title="Export captions",
-            initialfile="lumacaption-results.csv",
+            initialfile="lunacaption-results.csv",
             defaultextension=".csv",
             filetypes=[("CSV spreadsheet", "*.csv"), ("JSON", "*.json")],
             confirmoverwrite=True,
@@ -874,10 +1046,10 @@ class CaptionApp:
             title="Save session",
             initialfile=self.session_path.name
             if self.session_path
-            else "workspace.lumacaption.json",
+            else "workspace.lunacaption.json",
             initialdir=str(self.session_path.parent) if self.session_path else None,
-            defaultextension=".lumacaption.json",
-            filetypes=[("LumaCaption session", "*.lumacaption.json"), ("JSON", "*.json")],
+            defaultextension=".lunacaption.json",
+            filetypes=SESSION_TYPES,
             confirmoverwrite=True,
         )
         if not path:
@@ -915,7 +1087,7 @@ class CaptionApp:
         path = filedialog.askopenfilename(
             parent=self.root,
             title="Open session",
-            filetypes=[("LumaCaption session", "*.lumacaption.json"), ("JSON", "*.json")],
+            filetypes=SESSION_TYPES,
         )
         if not path:
             return
@@ -987,7 +1159,8 @@ class CaptionApp:
             self.preview_source.close()
             self.preview_source = None
         self.preview_photo = None
-        self.preview.configure(image="", text="Add images to start.")
+        self.preview.configure(image=self.empty_image, text="Add images to start.")
+        self._fit_placeholder()
         self.filename.configure(text="No image selected")
         self.detail.configure(text="Review and edit generated text before sharing.")
         self._show_caption()
@@ -1061,7 +1234,7 @@ class CaptionApp:
         self._save_edit()
         if self.busy:
             if not messagebox.askyesno(
-                "Close LumaCaption?",
+                "Close LunaCaption?",
                 "A batch is running. Close and discard unsaved work? "
                 "Choose No to return, cancel the batch, and save first.",
                 parent=self.root,

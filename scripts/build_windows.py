@@ -107,10 +107,10 @@ def collect_notices(stage: Path, distributions: dict[str, str]) -> list[dict]:
 
 def stage_metadata(stage: Path, version: str) -> None:
     """Retain runtime requirement metadata without an editable-install local URL."""
-    dist = metadata.distribution("lumacaption")
+    dist = metadata.distribution("lunacaption")
     if dist.version != version:
-        raise ValueError("Installed LumaCaption version differs from pyproject.toml.")
-    folder = stage / f"lumacaption-{version}.dist-info"
+        raise ValueError("Installed LunaCaption version differs from pyproject.toml.")
+    folder = stage / f"lunacaption-{version}.dist-info"
     folder.mkdir()
     for name in ("METADATA", "WHEEL", "entry_points.txt", "top_level.txt"):
         content = dist.read_text(name)
@@ -143,7 +143,7 @@ def build(name: str) -> Path:
     stage_metadata(stage, project["version"])
     env = {
         **os.environ,
-        "LUMACAPTION_BUILD_STAGE": str(stage),
+        "LUNACAPTION_BUILD_STAGE": str(stage),
         "PYTHONHASHSEED": "0",
         "PYTHONUTF8": "1",
         "HF_HUB_OFFLINE": "1",
@@ -158,7 +158,7 @@ def build(name: str) -> Path:
         str(output),
         "--workpath",
         str(work / "pyinstaller"),
-        str(ROOT / "packaging/LumaCaption.spec"),
+        str(ROOT / "packaging/LunaCaption.spec"),
     ]
     print(f"Building {name}; detailed output: build/{name}/build.log", flush=True)
     with (work / "build.log").open("w", encoding="utf-8") as log:
@@ -180,11 +180,11 @@ def sanitize_metadata(bundle: Path) -> int:
 
 
 def finish_bundle(output: Path, stage: Path, versions: dict, project: dict) -> Path:
-    bundle = output / "LumaCaption"
+    bundle = output / "LunaCaption"
     if (bundle / "build-info.json").exists():
         raise ValueError("This bundle has already been finalized.")
     removed_metadata = sanitize_metadata(bundle)
-    for filename in ("LumaCaption.exe", "LumaCaption-CLI.exe"):
+    for filename in ("LunaCaption.exe", "LunaCaption-CLI.exe"):
         if not (bundle / filename).is_file():
             raise ValueError("Build did not produce both launchers.")
     shutil.copytree(stage / "licenses", bundle / "licenses", dirs_exist_ok=True)
@@ -204,7 +204,7 @@ def finish_bundle(output: Path, stage: Path, versions: dict, project: dict) -> P
             raise ValueError("Editable-install metadata must not ship in the executable folder.")
     hashes = {p.relative_to(bundle).as_posix(): digest(p) for p in files}
     source_paths = [
-        *sorted((ROOT / "src/lumacaption").glob("*.py")),
+        *sorted((ROOT / "src/lunacaption").glob("*.py")),
         *sorted((ROOT / "packaging").rglob("*")),
         ROOT / "scripts/build_windows.py",
         ROOT / "scripts/verify_offline.py",
@@ -231,14 +231,14 @@ def finish_bundle(output: Path, stage: Path, versions: dict, project: dict) -> P
     }
     (bundle / "build-info.json").write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
     print(
-        f"Created dist/{output.name}/LumaCaption ({info['bytes'] / 1024**2:.1f} MiB).", flush=True
+        f"Created dist/{output.name}/LunaCaption ({info['bytes'] / 1024**2:.1f} MiB).", flush=True
     )
     return bundle
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--name", default="LumaCaption-0.1.0-win64")
+    parser.add_argument("--name", default="LunaCaption-0.1.0-win64")
     parser.add_argument(
         "--check-only", action="store_true", help="Check prerequisites without starting a build."
     )

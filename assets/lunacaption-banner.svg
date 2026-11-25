@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="220" viewBox="0 0 880 220" role="img" aria-label="LunaCaption">
+  <title>LunaCaption</title>
+  <defs>
+    <mask id="crescent">
+      <circle cx="775" cy="165" r="100" fill="#fff"/>
+      <circle cx="819" cy="133" r="86" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="880" height="220" rx="24" fill="#f2eef6"/>
+  <g transform="translate(48 38) scale(0.67) translate(-668 -58)">
+    <g mask="url(#crescent)">
+      <rect x="660" y="50" width="240" height="240" fill="#6a52c4"/>
+      <polygon points="819,133 600,40 600,0 1000,0 1000,133" fill="#9a86e2"/>
+      <polygon points="819,133 690,350 1000,350 1000,133" fill="#45338f"/>
+    </g>
+    <g stroke="#2f2560" stroke-width="14" stroke-linecap="round">
+      <line x1="790" y1="166" x2="856" y2="166"/>
+      <line x1="790" y1="194" x2="828" y2="194"/>
+    </g>
+  </g>
+  <text x="222" y="134" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="68" font-weight="700" letter-spacing="-1.5" fill="#2f2560">LunaCaption</text>
+</svg>

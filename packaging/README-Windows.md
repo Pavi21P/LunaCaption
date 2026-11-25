@@ -1,9 +1,9 @@
-# LumaCaption for Windows
+# LunaCaption for Windows
 
-Keep this entire folder together. Launch LumaCaption.exe for the desktop app.
-LumaCaption-CLI.exe provides command-line captions, model setup, and diagnostics.
-This portable development build is unsigned. Clean-machine compatibility has not
-yet been verified; see the project validation record before distributing it.
+Keep this entire folder together. Launch LunaCaption.exe for the desktop app.
+LunaCaption-CLI.exe provides command-line captions, model setup, and diagnostics.
+This portable build is unsigned and has not yet been tested on a clean Windows
+machine.
 
 ## First model setup
 
@@ -11,17 +11,17 @@ The model is downloaded separately and is not included in this folder.
 From PowerShell in this folder:
 
 ~~~powershell
-.\LumaCaption-CLI.exe --download-model
-.\LumaCaption-CLI.exe --diagnose
+.\LunaCaption-CLI.exe --download-model
+.\LunaCaption-CLI.exe --diagnose
 ~~~
 
-The default cache is %LOCALAPPDATA%\LumaCaption\models. To reuse another existing
-cache, set LUMACAPTION_CACHE before running either launcher. The desktop
+The default cache is %LOCALAPPDATA%\LunaCaption\models. To reuse another existing
+cache, set LUNACAPTION_CACHE before running either launcher. The desktop
 Offline checkbox uses cached files only.
 
 ~~~powershell
-$env:LUMACAPTION_CACHE = "D:\your-model-cache"
-.\LumaCaption-CLI.exe --offline "D:\photos\image.jpg" --output "D:\captions.json"
+$env:LUNACAPTION_CACHE = "D:\your-model-cache"
+.\LunaCaption-CLI.exe --offline "D:\photos\image.jpg" --output "D:\captions.json"
 ~~~
 
 Sessions and exports are saved where you choose; recovery remains under your
@@ -34,7 +34,7 @@ exports, and Ctrl+S / Ctrl+O save or open sessions. F6 switches between the queu
 and caption editor; Tab and Shift+Tab leave the editor without inserting tabs.
 
 CPU is the default. The desktop Compute device selector or --device cuda requests
-CUDA, with CPU fallback when unavailable. The header/CLI reports the actual device.
+CUDA, with CPU fallback when unavailable. The status bar/CLI reports the actual device.
 This CPU-built package does not contain a CUDA-enabled PyTorch runtime; requesting
 CUDA here falls back to CPU. It does not install drivers or GPU dependencies.
 Real GPU execution remains unverified. Device choice is not saved in sessions.
@@ -48,4 +48,4 @@ retain dependency notices. Model weights retain the upstream model license.
 
 The developer-only --verify-package command runs the bundled offline verification
 script; it is not needed for ordinary use. Full instructions are in docs/PACKAGING.md
-in the source repository: https://github.com/Pavi21P/lumacaption.
+in the source repository: https://github.com/Pavi21P/lunacaption.

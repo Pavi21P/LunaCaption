@@ -30,7 +30,7 @@ CACHE_FILES = (
     "pytorch_model.bin",
 )
 SETUP_HINT = (
-    "Re-extract the complete LumaCaption folder and retry."
+    "Re-extract the complete LunaCaption folder and retry."
     if getattr(sys, "frozen", False)
     else "Run Setup-Windows.ps1 with supported 64-bit Python."
 )
@@ -61,7 +61,7 @@ def dependency_versions() -> dict[str, Check]:
         from packaging.version import Version
 
         requirements = {}
-        for text in metadata.requires("lumacaption") or []:
+        for text in metadata.requires("lunacaption") or []:
             requirement = Requirement(text)
             if requirement.marker is None or requirement.marker.evaluate({"extra": ""}):
                 requirements[requirement.name.lower()] = requirement.specifier
@@ -135,9 +135,9 @@ def check_runtime() -> dict[str, bool] | None:
     try:
         flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
         command = (
-            [str(Path(sys.executable).with_name("LumaCaption-CLI.exe")), "--_runtime-probe"]
+            [str(Path(sys.executable).with_name("LunaCaption-CLI.exe")), "--_runtime-probe"]
             if getattr(sys, "frozen", False)
-            else [sys.executable, "-m", "lumacaption.diagnostics", "--probe"]
+            else [sys.executable, "-m", "lunacaption.diagnostics", "--probe"]
         )
         completed = subprocess.run(
             command,
@@ -180,11 +180,11 @@ def check_cache(directory: Path | None = None) -> Check:
             False,
             "Missing, unreadable, or invalid cached files. "
             + (
-                "Run LumaCaption-CLI.exe --download-model when online; "
+                "Run LunaCaption-CLI.exe --download-model when online; "
                 if getattr(sys, "frozen", False)
-                else "Run Launch-LumaCaption.cmd --download-model when online; "
+                else "Run Launch-LunaCaption.cmd --download-model when online; "
             )
-            + "use the same LUMACAPTION_CACHE setting for both commands.",
+            + "use the same LUNACAPTION_CACHE setting for both commands.",
         )
 
 
@@ -229,7 +229,7 @@ def collect_checks() -> list[Check]:
 
 def run_diagnostics() -> int:
     checks = collect_checks()
-    print("LumaCaption diagnostics - local checks only")
+    print("LunaCaption diagnostics - local checks only")
     for check in checks:
         print(f"[{'OK' if check.ok else 'FAIL'}] {check.label}: {check.detail}")
     print("No downloads or model loading. File checks do not prove weight integrity or inference.")

@@ -1,154 +1,107 @@
-# Windows executable build
+# Building for Windows
 
-LC08 builds a portable folder with a windowed desktop launcher and a console launcher.
-Keep the whole output folder together. Model weights are downloaded separately.
-This is a repeatable pinned recipe; identical binary hashes across rebuilds are not promised.
+The build produces a portable folder with a windowed desktop launcher and a console
+launcher. Keep the whole output folder together. Model weights are downloaded
+separately. The recipe is pinned and repeatable, but identical binary hashes across
+rebuilds are not promised.
 
-The existing local LC08 bundle is a snapshot of that checkpoint. Later source
-changes, including LC10 keyboard support and LC12 device selection, require a new build with a new BuildName.
-Do not treat the old executable's successful smoke report as validation of new code.
+## Prerequisites
 
-## LC08R refresh attempt: unverified
+Use Windows x64, CPython 3.11.9, and the source environment created by
+`Setup-Windows.ps1 -Dev`. Runtime dependencies must match `requirements-lock.txt`;
+the build adds only the versions in `requirements-build.txt`. Other Python patch
+versions need their own validated recipe. A full build needs at least 3 GiB of free
+disk space and a fair amount of memory, so close heavy applications first.
 
-The attempted refresh at dist/LumaCaption-0.1.0-win64-lc12/LumaCaption/ is not a
-verified distribution. PyInstaller completed compilation and collection, but
-finalization failed while reading a generated file for SHA-256 hashing with
-OSError: [Errno 22] Invalid argument. The manifest and runtime checks were not
-completed. Preserve these local files as failed-build evidence; do not distribute
-or present them as tested.
-
-The host showed low available memory and command-start failures. The user then
-reported a Windows blue screen during the attempt. No crash dump was analyzed,
-so the exact cause is unconfirmed. Heavy build/model work has stopped. Review
-resources or use a separate build machine before retrying; the source app remains
-at the previously tested LC12 checkpoint. The original LC08 folder was preserved.
-
-The November 7 read-only review found 2.61 GiB free on the build drive, below the
-recipe's existing 3 GiB minimum. Passing that minimum later would not establish
-safe memory/disk capacity for a full build. See the [resource review](VALIDATION.md#lc08r-low-load-resource-review-2026-11-07).
-Keep retries paused pending a separate host or an agreed resource plan; this review
-did not run or validate any generated executable.
-
-## Checksum failure reporting
-
-The source build helper now reports the failing artifact's project-relative path
-and OS error code if it cannot open or read a file for hashing. It exits with a
-failure and does not write a completed manifest or automatically retry. Preserve
-the error and output for investigation. This diagnostic improvement was tested
-with tiny synthetic files; the failed LC08R folder has not been rehashed or validated.
-See [test evidence](VALIDATION.md#lc08d-checksum-error-diagnostics-2026-11-07).
-
-## Check prerequisites without building
-
-From the project folder, use a new output name:
+To check prerequisites without building anything:
 
 ~~~powershell
-.\Build-Windows.ps1 -CheckOnly -BuildName "LumaCaption-preflight-check"
+.\Build-Windows.ps1 -CheckOnly -BuildName "LunaCaption-preflight-check"
 ~~~
 
-Python exposes the same check through `scripts/build_windows.py` with
-`--check-only --name LumaCaption-preflight-check`. This reads the Windows/Python architecture and version,
-locked installed-package metadata, project version, output-name availability, and
-3 GiB disk minimum. It shares those checks with the real build command, but does
-not create staging/output folders, install tools, load the AI model, hash the old
-bundle, or start PyInstaller. Reusing an existing output/work name fails; nothing
-is removed. Missing dependencies produce a failed check, not an installation.
+This reads the Windows/Python architecture and version, the locked package versions,
+the project version, whether the output name is free, and the 3 GiB disk minimum.
+It does not create folders, install tools, load the model, or start PyInstaller.
+`-CheckOnly` cannot be combined with `-InstallBuildTools`. A passing check does not
+measure RAM or reserve disk space.
 
-`-CheckOnly` cannot be combined with `-InstallBuildTools`. A successful check means
-only these prerequisites passed at that moment. It does not measure RAM, reserve
-disk space, validate installed imports, or establish safe build/runtime capacity.
-LC08R remains paused pending an agreed execution environment/resource plan.
+## Build
 
-## Build prerequisites and command
-
-Use Windows x64, CPython 3.11.9, and the existing source environment created by
-Setup-Windows.ps1 -Dev. Runtime dependencies must match requirements-lock.txt;
-the build adds only the versions in requirements-build.txt. Other Python patch
-versions need a separately validated recipe.
-
-From the source project directory:
+From the project folder:
 
 ~~~powershell
 .\Build-Windows.ps1 -InstallBuildTools
 ~~~
 
-Later builds can omit -InstallBuildTools. The script checks every locked version
-before running PyInstaller 6.22.3 with hooks 2026.9. It requires at least 3 GiB
-free space and writes a local build log. It never deletes old build output.
-Choose a new name for another build:
+Later builds can omit `-InstallBuildTools`. The script checks every locked version,
+then runs PyInstaller 6.22.3 with hooks 2026.9 and writes a local build log. It never
+deletes earlier output, so choose a new name for each build:
 
 ~~~powershell
-.\Build-Windows.ps1 -BuildName "LumaCaption-0.1.0-win64-second"
+.\Build-Windows.ps1 -BuildName "LunaCaption-0.1.0-win64-second"
 ~~~
 
-The default output is dist/LumaCaption-0.1.0-win64/LumaCaption/. It contains:
+The default output is `dist/LunaCaption-0.1.0-win64/LunaCaption/`:
 
-- LumaCaption.exe: desktop app without a console window.
-- LumaCaption-CLI.exe: captions, model setup, and diagnostics in a terminal.
-- _internal/: Python, Tk, dependencies, and supporting files. Keep this directory.
-- README-Windows.md, LICENSE, THIRD_PARTY_NOTICES.md, and licenses/: usage and notices.
-- build-info.json: package versions, build time, source hashes, and bundled-file hashes.
+- `LunaCaption.exe`: the desktop app, without a console window.
+- `LunaCaption-CLI.exe`: captions, model setup, and diagnostics in a terminal.
+- `_internal/`: Python, Tk, dependencies, and supporting files. Keep this directory.
+- `README-Windows.md`, `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/`.
+- `build-info.json`: package versions, build time, source hashes, and bundled-file hashes.
 
-build/ and dist/ are ignored. Do not upload generated executables or logs into the
-source repository. No installer, code-signing certificate, or GitHub release is
-created by this command. Dependencies retain their own licenses. Notice inventory
-entries include build tools; their presence is not a claim that every tool is a
-runtime dependency.
+Both executables use `packaging/LunaCaption.ico`. `build/` and `dist/` are ignored by
+Git; don't commit generated executables or logs. The build does not create an
+installer, sign the executables, or publish a release.
 
-## Model setup and cache
+If a file can't be hashed while writing `build-info.json`, the build stops, names
+the file and the OS error, and does not write a manifest. Keep that output for
+investigation rather than distributing it.
 
-Unlike the source launcher, packaged executables default to
-%LOCALAPPDATA%\LumaCaption\models. Both launchers honor LUMACAPTION_CACHE.
-To reuse the development cache in a PowerShell session:
+## Model cache
+
+Packaged executables default to `%LOCALAPPDATA%\LunaCaption\models` (a model
+downloaded under the earlier `LumaCaption` folder name is reused). Both launchers
+honor `LUNACAPTION_CACHE`. To reuse the development cache:
 
 ~~~powershell
-$env:LUMACAPTION_CACHE = (Resolve-Path ".cache\models").Path
-& ".\dist\LumaCaption-0.1.0-win64\LumaCaption\LumaCaption-CLI.exe" --diagnose
+$env:LUNACAPTION_CACHE = (Resolve-Path ".cache\models").Path
+& ".\dist\LunaCaption-0.1.0-win64\LunaCaption\LunaCaption-CLI.exe" --diagnose
 ~~~
 
-To create a separate cache on another machine, run LumaCaption-CLI.exe
---download-model while online, then use --offline or the desktop Offline checkbox.
-No weights or user photos are included in the build.
+On another machine, run `LunaCaption-CLI.exe --download-model` while online, then use
+`--offline` or the desktop Offline checkbox. No weights or photos are included in the build.
 
-## Development-machine verification
+## Verifying a build
 
-1. Run --help and --diagnose on LumaCaption-CLI.exe. Frozen diagnostics starts the
-   console sibling with an internal probe flag, never Python's -m command.
-2. Run the bundled offline smoke with known local development images, an explicit
-   cache, and a fresh report under .local/. For example, from the source root:
+1. Run `--help` and `--diagnose` with `LunaCaption-CLI.exe`.
+2. Run the bundled offline smoke test with your own local photos and a fresh report path:
 
 ~~~powershell
-$env:LUMACAPTION_CACHE = (Resolve-Path ".cache\models").Path
-$exe = ".\dist\LumaCaption-0.1.0-win64\LumaCaption\LumaCaption-CLI.exe"
+$env:LUNACAPTION_CACHE = (Resolve-Path ".cache\models").Path
+$exe = ".\dist\LunaCaption-0.1.0-win64\LunaCaption\LunaCaption-CLI.exe"
 & $exe --verify-package "D:\local\photo.jpg" --desktop --report ".local\packaged-smoke.json"
 ~~~
 
-3. Repeat --verify-package with LumaCaption.exe and a different report path to check
-   the windowed bootloader. Use Start-Process -Wait -PassThru when running a GUI
-   executable from PowerShell so completion and its exit code are checked.
-4. Compare source-image hashes and captions with the source smoke. The embedded
-   script blocks HTTP/socket connections, exercises the real Tk caption worker and
-   CSV/JSON exports, and disables recovery so verification does not alter user data.
-   It creates and withdraws a real Tk window; this is not manual visual acceptance.
-5. Keep raw reports/images private and publish only aggregate results in
-   [VALIDATION.md](VALIDATION.md). Preserve failed-run evidence rather than overwriting it.
+3. Repeat `--verify-package` with `LunaCaption.exe` and a different report path to
+   check the windowed launcher. From PowerShell, use `Start-Process -Wait -PassThru`
+   so the exit code is checked.
+4. Compare captions and image hashes with a source run. The smoke test blocks network
+   access, runs the real Tk caption worker and CSV/JSON exports, and disables
+   recovery so it doesn't touch user data.
 
-A successful build or a running process alone is not runtime verification.
-Missing optional-module warnings in the build log require review against the used
-BLIP path. Test actual model loading and generation before calling a package usable.
+A successful build or a running process alone is not proof the package works; test
+actual model loading and caption generation before calling a build usable.
 
 ## Build choices and limits
 
 The [PyInstaller spec](https://pyinstaller.org/en/stable/spec-files.html) shares one
 analysis between the two launchers. Transformers source files and explicit BLIP/BERT
-imports support its lazy import maps; metadata is retained for dependency checks.
-The finalization step removes pip direct_url.json files only inside the generated
-bundle, excluding editable-install source URLs before checksums are recorded. The entry point calls freeze_support
-before application imports and supplies sink streams in windowed mode, following
-[PyInstaller's frozen-process guidance](https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html).
+imports support its lazy import maps; package metadata is kept for dependency checks.
+The finalization step removes pip `direct_url.json` files inside the bundle so local
+source paths aren't shipped. The entry point calls `freeze_support` before
+application imports and supplies sink streams in windowed mode, following
+[PyInstaller's guidance](https://pyinstaller.org/en/stable/common-issues-and-pitfalls.html).
 
-The developer evaluation CLI remains a source-environment tool; the packaged app
-covers desktop/standard CLI captioning and diagnostics. The package is unsigned.
-Clean Windows/VM installation, a machine without the development environment, and
-offline restart with a newly downloaded cache belong to LC09. Manual accessibility
-and GPU verification remain separate tasks.
+The evaluation CLI is a source-only tool; the packaged app covers desktop and CLI
+captioning plus diagnostics. The package is unsigned and has not yet been tested on
+a clean Windows machine.

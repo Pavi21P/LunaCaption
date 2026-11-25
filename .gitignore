@@ -21,4 +21,5 @@ exports/
 Flickr*/
 Flicker*/
 __MACOSX/
+*.lunacaption.json
 *.lumacaption.json

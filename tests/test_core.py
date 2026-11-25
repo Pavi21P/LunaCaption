@@ -3,10 +3,10 @@ from threading import Event
 import pytest
 from PIL import Image
 
-from lumacaption import images
-from lumacaption.batch import CaptionResult, run_batch
-from lumacaption.engine import CaptionOptions, ModelUnavailableError
-from lumacaption.exporting import export_results, spreadsheet_safe
+from lunacaption import images
+from lunacaption.batch import CaptionResult, run_batch
+from lunacaption.engine import CaptionOptions, ModelUnavailableError
+from lunacaption.exporting import export_results, spreadsheet_safe
 
 
 @pytest.fixture
@@ -198,7 +198,7 @@ def test_export_existing_file_requires_permission(photo, tmp_path):
 
 def test_export_leaves_no_temp_files(photo, tmp_path):
     export_results([CaptionResult(str(photo))], tmp_path / "out.json")
-    assert list(tmp_path.glob(".lumacaption-*")) == []
+    assert list(tmp_path.glob(".lunacaption-*")) == []
 
 
 @pytest.mark.parametrize("options", [{"length": "invalid"}, {"beams": 0}, {"beams": 6}])
@@ -208,14 +208,14 @@ def test_options_validation(options):
 
 
 def test_cli_rejects_missing_input(capsys):
-    from lumacaption.cli import main
+    from lunacaption.cli import main
 
     assert main(["missing-image.jpg"]) == 2
     assert "Not a supported image" in capsys.readouterr().err
 
 
 def test_cli_exports_errors_without_model(tmp_path):
-    from lumacaption.cli import main
+    from lunacaption.cli import main
 
     corrupt = tmp_path / "bad.jpg"
     corrupt.write_bytes(b"bad")

@@ -7,10 +7,10 @@ from dataclasses import replace
 import pytest
 from PIL import Image
 
-from lumacaption.batch import CaptionResult
-from lumacaption.desktop import CaptionApp
-from lumacaption.engine import CaptionOptions
-from lumacaption.sessions import Session, load_session, save_session
+from lunacaption.batch import CaptionResult
+from lunacaption.desktop import CaptionApp
+from lunacaption.engine import CaptionOptions
+from lunacaption.sessions import Session, load_session, save_session
 
 
 @pytest.fixture(scope="session")
@@ -28,9 +28,9 @@ def desktop(tmp_path, monkeypatch, tk_runtime):
     root = tk.Toplevel(tk_runtime)
     root.withdraw()
     app = CaptionApp(root, recovery_dir=tmp_path / "recovery")
-    monkeypatch.setattr("lumacaption.desktop.messagebox.showerror", lambda *a, **k: None)
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesno", lambda *a, **k: True)
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesnocancel", lambda *a, **k: False)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.showerror", lambda *a, **k: None)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesno", lambda *a, **k: True)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesnocancel", lambda *a, **k: False)
     path = tmp_path / "my picture.png"
     Image.new("RGB", (40, 20), "blue").save(path)
     yield root, app, path
@@ -66,7 +66,7 @@ def test_selection_and_caption_edits_survive_export(desktop, tmp_path, monkeypat
     app.editor.insert("1.0", "My edited caption")
     destination = tmp_path / "result.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kwargs: str(destination)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kwargs: str(destination)
     )
     app._export()
     doc = json.loads(destination.read_text())
@@ -148,7 +148,7 @@ def test_failed_row_can_be_retried(desktop):
 
 def import_file(app, monkeypatch, destination):
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.askopenfilename", lambda **kw: str(destination)
+        "lunacaption.desktop.filedialog.askopenfilename", lambda **kw: str(destination)
     )
     app._open_session()
 
@@ -167,9 +167,9 @@ def test_session_roundtrip_includes_live_editor_and_settings(desktop, tmp_path, 
     app.beams = 5
     app.offline.set(True)
     app.recursive.set(True)
-    destination = tmp_path / "saved.lumacaption.json"
+    destination = tmp_path / "saved.lunacaption.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
     )
     assert app._save_session()
     assert not app.dirty
@@ -207,10 +207,10 @@ def test_invalid_open_preserves_workspace_and_uncommitted_editor(
     destination.write_text(contents)
     errors = []
     monkeypatch.setattr(
-        "lumacaption.desktop.messagebox.showerror", lambda *a, **kw: errors.append(a)
+        "lunacaption.desktop.messagebox.showerror", lambda *a, **kw: errors.append(a)
     )
     monkeypatch.setattr(
-        "lumacaption.desktop.messagebox.askyesnocancel",
+        "lunacaption.desktop.messagebox.askyesnocancel",
         lambda *a, **kw: pytest.fail("Invalid import must not prompt to discard work"),
     )
     import_file(app, monkeypatch, destination)
@@ -227,7 +227,7 @@ def test_cancel_unsaved_prompt_preserves_workspace(desktop, tmp_path, monkeypatc
     root.update()
     destination = tmp_path / "empty.json"
     save_session(Session(), destination)
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: None)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: None)
     if action == "open":
         import_file(app, monkeypatch, destination)
     else:
@@ -243,9 +243,9 @@ def test_cancelled_or_failed_save_blocks_replacement(desktop, tmp_path, monkeypa
     root.update()
     incoming = tmp_path / "empty.json"
     save_session(Session(), incoming)
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: True)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: True)
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename",
+        "lunacaption.desktop.filedialog.asksaveasfilename",
         lambda **kw: "" if failure == "cancel" else str(tmp_path / "save.json"),
     )
     if failure == "write":
@@ -253,7 +253,7 @@ def test_cancelled_or_failed_save_blocks_replacement(desktop, tmp_path, monkeypa
         def fail(*args, **kwargs):
             raise OSError("Disk full")
 
-        monkeypatch.setattr("lumacaption.desktop.save_session", fail)
+        monkeypatch.setattr("lunacaption.desktop.save_session", fail)
     import_file(app, monkeypatch, incoming)
     assert str(path.resolve()) in app.rows and app.dirty
     assert app.session_path is None
@@ -265,9 +265,9 @@ def test_save_before_open_keeps_latest_if_same_destination(desktop, tmp_path, mo
     save_session(Session(), destination)
     app.add_paths([path])
     root.update()
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: True)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: True)
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
     )
     import_file(app, monkeypatch, destination)
     assert list(app.rows) == [str(path.resolve())]
@@ -301,7 +301,7 @@ def test_missing_images_preserve_edits_provenance_and_can_export(desktop, tmp_pa
     assert not app.busy and app.rows[missing] == row
     exported = tmp_path / "export.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(exported)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(exported)
     )
     app._export()
     import json
@@ -342,7 +342,7 @@ def test_session_controls_do_not_replace_running_batch(desktop, monkeypatch):
     app._update_controls()
     for name in ("askopenfilename", "asksaveasfilename"):
         monkeypatch.setattr(
-            "lumacaption.desktop.filedialog." + name,
+            "lunacaption.desktop.filedialog." + name,
             lambda **kw: pytest.fail("Must not show dialogs during generation"),
         )
     assert str(app.save_session_button["state"]) == "disabled"
@@ -384,14 +384,14 @@ def test_cancel_open_dialog_leaves_workspace(desktop, monkeypatch):
     root, app, path = desktop
     app.add_paths([path])
     root.update()
-    monkeypatch.setattr("lumacaption.desktop.filedialog.askopenfilename", lambda **kw: "")
+    monkeypatch.setattr("lunacaption.desktop.filedialog.askopenfilename", lambda **kw: "")
     app._open_session()
     assert list(app.rows) == [str(path.resolve())] and app.dirty
 
 
 def test_autosave_debounces_queue_settings_and_pasted_text(desktop, monkeypatch):
     root, app, path = desktop
-    monkeypatch.setattr("lumacaption.desktop.AUTOSAVE_DELAY_MS", 60)
+    monkeypatch.setattr("lunacaption.desktop.AUTOSAVE_DELAY_MS", 60)
     app.add_paths([path])
     root.update()
     row = app.rows[str(path.resolve())]
@@ -427,7 +427,7 @@ def test_autosave_debounces_queue_settings_and_pasted_text(desktop, monkeypatch)
 def test_startup_recovers_completed_and_interrupted_rows_without_inference(
     desktop, tmp_path, monkeypatch
 ):
-    from lumacaption.recovery import RecoveryStore
+    from lunacaption.recovery import RecoveryStore
 
     root, app, path = desktop
     app._release_recovery()
@@ -458,14 +458,14 @@ def test_startup_recovers_completed_and_interrupted_rows_without_inference(
 
 
 def test_declining_recovery_removes_only_the_recovery_copy(desktop, tmp_path, monkeypatch):
-    from lumacaption.recovery import RecoveryStore
+    from lunacaption.recovery import RecoveryStore
 
     _, app, path = desktop
     app._release_recovery()
     store = RecoveryStore(tmp_path / "declined")
     store.save(Session(results=[CaptionResult(str(path.resolve()))]))
     store.close()
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesno", lambda *a, **kw: False)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesno", lambda *a, **kw: False)
     app._initialize_recovery(tmp_path / "declined")
     assert not app.rows and not app.dirty
     assert app.recovery.load() is None
@@ -477,7 +477,7 @@ def test_corrupt_startup_copy_is_preserved_and_autosave_disabled(desktop, tmp_pa
     app._release_recovery()
     directory = tmp_path / "corrupt"
     directory.mkdir()
-    damaged = directory / "autosave.lumacaption.json"
+    damaged = directory / "autosave.lunacaption.json"
     damaged.write_text("bad json")
     app._initialize_recovery(directory)
     app.add_paths([path])
@@ -488,7 +488,7 @@ def test_corrupt_startup_copy_is_preserved_and_autosave_disabled(desktop, tmp_pa
 
 
 def test_second_window_preserves_first_windows_recovery(desktop):
-    from lumacaption.recovery import RecoveryStore
+    from lunacaption.recovery import RecoveryStore
 
     _, app, path = desktop
     app._release_recovery()
@@ -541,7 +541,7 @@ def test_explicit_save_or_replace_cleans_recovery_and_cancels_timer(
     elif action == "save":
         destination = tmp_path / "manual.json"
         monkeypatch.setattr(
-            "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
+            "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
         )
         assert app._save_session()
         assert load_session(destination).offline
@@ -560,7 +560,7 @@ def test_cancel_replacement_keeps_recovery(desktop, tmp_path, monkeypatch, actio
     app.add_paths([path])
     app._autosave_now()
     original = app.recovery.path.read_bytes()
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: None)
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: None)
     if action == "open":
         destination = tmp_path / "empty.json"
         save_session(Session(), destination)
@@ -575,7 +575,7 @@ def test_batch_pending_and_completed_results_are_recoverable(desktop, monkeypatc
     app.add_paths([path])
     root.update()
     # Hold thread creation without changing the real UI/event processing.
-    monkeypatch.setattr("lumacaption.desktop.threading.Thread.start", lambda self: None)
+    monkeypatch.setattr("lunacaption.desktop.threading.Thread.start", lambda self: None)
     app._start()
     assert app.recovery.load().results[0].status == "pending"
     app.events.put(("result", CaptionResult(str(path.resolve()), caption="Done", status="done")))
@@ -606,7 +606,7 @@ def test_manual_save_cannot_target_the_internal_recovery_file(desktop, monkeypat
     app._autosave_now()
     original = app.recovery.path.read_bytes()
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(app.recovery.path)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(app.recovery.path)
     )
     assert not app._save_session()
     assert app.recovery.path.read_bytes() == original and app.dirty
@@ -614,7 +614,7 @@ def test_manual_save_cannot_target_the_internal_recovery_file(desktop, monkeypat
 
 @pytest.mark.parametrize("busy", [False, True])
 def test_confirmed_close_discards_recovery_and_releases_lock(desktop, monkeypatch, busy):
-    from lumacaption.recovery import RecoveryStore
+    from lunacaption.recovery import RecoveryStore
 
     root, app, path = desktop
     app.add_paths([path])
@@ -639,12 +639,12 @@ def test_storage_unavailable_still_allows_manual_session_save(desktop, tmp_path,
     def unavailable(directory):
         raise PermissionError("Access denied")
 
-    monkeypatch.setattr("lumacaption.desktop.RecoveryStore", unavailable)
+    monkeypatch.setattr("lunacaption.desktop.RecoveryStore", unavailable)
     app._initialize_recovery(tmp_path / "blocked")
     app.add_paths([path])
     destination = tmp_path / "manual.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
     )
     assert app._save_session()
     assert load_session(destination).results[0].path == str(path.resolve())
@@ -668,7 +668,7 @@ def test_failed_manual_save_keeps_recovery_copy(desktop, tmp_path, monkeypatch):
     app._autosave_now()
     original = app.recovery.path.read_bytes()
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename",
+        "lunacaption.desktop.filedialog.asksaveasfilename",
         lambda **kw: str(tmp_path / "nonexistent" / "manual.json"),
     )
     assert not app._save_session()
@@ -695,7 +695,7 @@ def missing_workspace(root, app, tmp_path, *, status="done"):
 
 
 def choose_replacement(app, monkeypatch, path):
-    monkeypatch.setattr("lumacaption.desktop.filedialog.askopenfilename", lambda **kw: str(path))
+    monkeypatch.setattr("lunacaption.desktop.filedialog.askopenfilename", lambda **kw: str(path))
     app._relink()
 
 
@@ -746,9 +746,9 @@ def test_relink_keeps_uncommitted_edits_in_recovery_and_manual_session(
     assert recovered.results[0].generated_caption == "Original AI caption"
     assert recovered.results[0].path == str(path.resolve())
     assert recovered.results[0].edited
-    destination = tmp_path / "relinked.lumacaption.json"
+    destination = tmp_path / "relinked.lunacaption.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
     )
     assert app._save_session()
     app._clear()
@@ -765,7 +765,7 @@ def test_relink_keeps_uncommitted_edits_in_recovery_and_manual_session(
 def test_invalid_or_cancelled_relink_preserves_workspace_and_recovery(
     desktop, tmp_path, monkeypatch, kind
 ):
-    from lumacaption.images import ImageInputError
+    from lunacaption.images import ImageInputError
 
     root, app, path = desktop
     row = missing_workspace(root, app, tmp_path)
@@ -776,7 +776,7 @@ def test_invalid_or_cancelled_relink_preserves_workspace_and_recovery(
     app.dirty = False
     errors = []
     monkeypatch.setattr(
-        "lumacaption.desktop.messagebox.showerror", lambda *a, **kw: errors.append(a)
+        "lunacaption.desktop.messagebox.showerror", lambda *a, **kw: errors.append(a)
     )
     if kind == "cancel":
         candidate = ""
@@ -786,7 +786,7 @@ def test_invalid_or_cancelled_relink_preserves_workspace_and_recovery(
         def fail(path):
             raise ImageInputError("Permission denied")
 
-        monkeypatch.setattr("lumacaption.desktop.load_image", fail)
+        monkeypatch.setattr("lunacaption.desktop.load_image", fail)
     else:
         candidate = tmp_path / ("invalid.txt" if kind == "unsupported" else "invalid.png")
         if kind == "directory":
@@ -818,7 +818,7 @@ def test_relink_rejects_duplicate_images(desktop, tmp_path, monkeypatch, kind):
         candidate.hardlink_to(path)
     errors = []
     monkeypatch.setattr(
-        "lumacaption.desktop.messagebox.showerror", lambda *a, **kw: errors.append(a)
+        "lunacaption.desktop.messagebox.showerror", lambda *a, **kw: errors.append(a)
     )
     choose_replacement(app, monkeypatch, candidate)
     assert list(app.rows) == [missing.path, existing] and app.current == missing.path
@@ -865,7 +865,7 @@ def test_relink_button_tracks_missing_selection_and_busy_state(desktop, tmp_path
     app._update_controls()
     assert str(app.relink_button["state"]) == "disabled"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.askopenfilename",
+        "lunacaption.desktop.filedialog.askopenfilename",
         lambda **kw: pytest.fail("No relink dialog while busy or on a healthy row"),
     )
     app._relink()
@@ -969,7 +969,7 @@ def test_keyboard_add_generate_edit_export_save_and_open(desktop, tmp_path, monk
 
     app.engine = Stub()
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.askopenfilenames", lambda **kw: (str(path),)
+        "lunacaption.desktop.filedialog.askopenfilenames", lambda **kw: (str(path),)
     )
     keyboard_window(root, app)
     press(root, "<Control-i>")
@@ -987,18 +987,18 @@ def test_keyboard_add_generate_edit_export_save_and_open(desktop, tmp_path, monk
 
     destination = tmp_path / "keyboard.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(destination)
     )
     press(root, "<Control-e>")
     assert json.loads(destination.read_text())["results"][0]["caption"] == "x"
     assert app.editor.get("1.0", "end-1c") == "x"
-    session = tmp_path / "keyboard.lumacaption.json"
+    session = tmp_path / "keyboard.lunacaption.json"
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(session)
+        "lunacaption.desktop.filedialog.asksaveasfilename", lambda **kw: str(session)
     )
     press(root, "<Control-s>")
     assert load_session(session).results[0].caption == "x" and not app.dirty
-    monkeypatch.setattr("lumacaption.desktop.filedialog.askopenfilename", lambda **kw: str(session))
+    monkeypatch.setattr("lunacaption.desktop.filedialog.askopenfilename", lambda **kw: str(session))
     press(root, "<Control-o>")
     assert root.focus_get() == app.tree
     assert app.rows[str(path.resolve())].caption == "x"
@@ -1048,14 +1048,14 @@ def test_keyboard_queue_arrows_select_matching_caption(desktop, tmp_path):
 def test_busy_shortcuts_respect_disabled_controls_and_escape(desktop, monkeypatch):
     root, app, path = desktop
     app.add_paths([path])
-    monkeypatch.setattr("lumacaption.desktop.threading.Thread.start", lambda self: None)
+    monkeypatch.setattr("lunacaption.desktop.threading.Thread.start", lambda self: None)
     keyboard_window(root, app)
     app.generate_button.focus_set()
     press(root, "<Control-Return>")
     assert app.busy and root.focus_get() == app.cancel_button
     for name in ("askopenfilenames", "askopenfilename", "asksaveasfilename", "askdirectory"):
         monkeypatch.setattr(
-            "lumacaption.desktop.filedialog." + name,
+            "lunacaption.desktop.filedialog." + name,
             lambda **kw: pytest.fail("A disabled shortcut opened a dialog"),
         )
     for sequence in ("<Control-i>", "<Control-Shift-I>", "<Control-o>", "<Control-s>"):
@@ -1073,10 +1073,10 @@ def test_busy_shortcuts_respect_disabled_controls_and_escape(desktop, monkeypatc
 def test_open_shortcut_keeps_edits_when_replacement_cancelled(desktop, tmp_path, monkeypatch):
     root, app, path = desktop
     app._apply_session(Session(results=[CaptionResult(str(path), caption="Draft", status="done")]))
-    other = tmp_path / "empty.lumacaption.json"
+    other = tmp_path / "empty.lunacaption.json"
     save_session(Session(), other)
-    monkeypatch.setattr("lumacaption.desktop.filedialog.askopenfilename", lambda **kw: str(other))
-    monkeypatch.setattr("lumacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: None)
+    monkeypatch.setattr("lunacaption.desktop.filedialog.askopenfilename", lambda **kw: str(other))
+    monkeypatch.setattr("lunacaption.desktop.messagebox.askyesnocancel", lambda *a, **kw: None)
     keyboard_window(root, app)
     press(root, "<F6>")
     app.editor.insert("end", " changed")
@@ -1090,11 +1090,11 @@ def test_open_shortcut_keeps_edits_when_replacement_cancelled(desktop, tmp_path,
 def test_folder_and_help_shortcuts_and_modal_isolation(desktop, monkeypatch):
     root, app, path = desktop
     monkeypatch.setattr(
-        "lumacaption.desktop.filedialog.askdirectory", lambda **kw: str(path.parent)
+        "lunacaption.desktop.filedialog.askdirectory", lambda **kw: str(path.parent)
     )
     help_calls = []
     monkeypatch.setattr(
-        "lumacaption.desktop.messagebox.showinfo", lambda *a, **kw: help_calls.append(a)
+        "lunacaption.desktop.messagebox.showinfo", lambda *a, **kw: help_calls.append(a)
     )
     keyboard_window(root, app)
     press(root, "<Control-Shift-I>")
@@ -1153,7 +1153,7 @@ def test_controls_remain_visible_at_minimum_window_size(desktop):
 def test_cancelled_add_shortcut_and_undo_preserve_editor_text(desktop, monkeypatch):
     root, app, path = desktop
     app._apply_session(Session(results=[CaptionResult(str(path), caption="Draft", status="done")]))
-    monkeypatch.setattr("lumacaption.desktop.filedialog.askopenfilenames", lambda **kw: ())
+    monkeypatch.setattr("lunacaption.desktop.filedialog.askopenfilenames", lambda **kw: ())
     keyboard_window(root, app)
     press(root, "<F6>")
     press(root, "<Control-i>")
@@ -1213,7 +1213,7 @@ def test_worker_snapshots_device_reuses_fallback_and_reloads_on_change(desktop, 
         def caption(self, image, options):
             return "A test caption"
 
-    monkeypatch.setattr("lumacaption.desktop.CaptionEngine", Stub)
+    monkeypatch.setattr("lunacaption.desktop.CaptionEngine", Stub)
     app.add_paths([path])
     root.update()
     app.device.set("cuda")

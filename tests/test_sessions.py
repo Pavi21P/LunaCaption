@@ -4,10 +4,10 @@ from dataclasses import asdict
 
 import pytest
 
-from lumacaption import sessions
-from lumacaption.batch import CaptionResult
-from lumacaption.engine import CaptionOptions
-from lumacaption.sessions import Session, SessionError, load_session, save_session
+from lunacaption import sessions
+from lunacaption.batch import CaptionResult
+from lunacaption.engine import CaptionOptions
+from lunacaption.sessions import Session, SessionError, load_session, save_session
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def workspace(tmp_path):
 
 @pytest.fixture
 def saved(workspace, tmp_path):
-    path = tmp_path / "workspace.lumacaption.json"
+    path = tmp_path / "workspace.lunacaption.json"
     save_session(workspace, path)
     return path
 
@@ -169,7 +169,7 @@ def test_failed_replace_preserves_previous_session(workspace, saved, monkeypatch
     with pytest.raises(OSError, match="disk error"):
         save_session(workspace, saved, overwrite=True)
     assert saved.read_bytes() == original
-    assert not list(saved.parent.glob(".lumacaption-session-*"))
+    assert not list(saved.parent.glob(".lunacaption-session-*"))
 
 
 def test_failed_flush_does_not_publish(workspace, tmp_path, monkeypatch):
@@ -182,7 +182,7 @@ def test_failed_flush_does_not_publish(workspace, tmp_path, monkeypatch):
     with pytest.raises(OSError):
         save_session(workspace, target)
     assert not target.exists()
-    assert not list(tmp_path.glob(".lumacaption-session-*"))
+    assert not list(tmp_path.glob(".lunacaption-session-*"))
 
 
 def test_racing_writer_is_not_overwritten(workspace, tmp_path, monkeypatch):
@@ -197,7 +197,7 @@ def test_racing_writer_is_not_overwritten(workspace, tmp_path, monkeypatch):
     with pytest.raises(FileExistsError):
         save_session(workspace, target)
     assert target.read_text() == "other writer"
-    assert not list(tmp_path.glob(".lumacaption-session-*"))
+    assert not list(tmp_path.glob(".lunacaption-session-*"))
 
 
 def test_save_revalidates_mutable_state(workspace, saved):
@@ -222,7 +222,7 @@ def test_input_file_cannot_be_replaced(tmp_path):
 
 
 def test_caption_export_is_not_a_session(saved):
-    from lumacaption.exporting import export_results
+    from lunacaption.exporting import export_results
 
     export_results([CaptionResult("C:/images/photo.jpg")], saved, overwrite=True)
     with pytest.raises(SessionError):
@@ -247,3 +247,11 @@ def test_deep_json_rejected(saved):
 def test_save_rejects_non_json_destination(workspace, tmp_path):
     with pytest.raises(SessionError, match=".json"):
         save_session(workspace, tmp_path / "image.png")
+
+
+def test_sessions_saved_under_the_previous_name_still_open(saved, workspace):
+    document = json.loads(saved.read_text(encoding="utf-8"))
+    assert document["format"] == "lunacaption-session"
+    document["format"] = "lumacaption-session"
+    saved.write_text(json.dumps(document), encoding="utf-8")
+    assert load_session(saved) == workspace

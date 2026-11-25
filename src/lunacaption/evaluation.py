@@ -10,6 +10,8 @@ import unicodedata
 from collections import Counter
 from pathlib import Path, PureWindowsPath
 
+# Frozen identifier: it is hashed into the image selection, so it keeps the
+# project's original name to preserve the published evaluation subset.
 PROTOCOL = "LumaCaption-eval-v1"
 COUNTS = {"test": 50, "dev": 10}
 SPLIT_FILES = {name: f"Flickr_8k.{name}Images.txt" for name in ("train", "dev", "test")}

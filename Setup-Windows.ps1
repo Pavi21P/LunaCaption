@@ -41,13 +41,13 @@ if ($LASTEXITCODE -ne 0) { throw "Could not update pip. Check your internet conn
 if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed." }
 $package = if ($Dev) { ".[dev]" } else { "." }
 & $runtime -m pip --disable-pip-version-check install -e $package
-if ($LASTEXITCODE -ne 0) { throw "LumaCaption installation failed." }
+if ($LASTEXITCODE -ne 0) { throw "LunaCaption installation failed." }
 & $runtime -m pip check
 if ($LASTEXITCODE -ne 0) { throw "Dependency validation failed." }
-$env:LUMACAPTION_CACHE = Join-Path $PSScriptRoot ".cache\models"
+$env:LUNACAPTION_CACHE = Join-Path $PSScriptRoot ".cache\models"
 if ($DownloadModel) {
-    & $runtime -m lumacaption --download-model
+    & $runtime -m lunacaption --download-model
     if ($LASTEXITCODE -ne 0) { throw "Model download failed. Retry when online." }
 }
 Write-Host ""
-Write-Host "LumaCaption is ready. Double-click Launch-LumaCaption.cmd."
+Write-Host "LunaCaption is ready. Double-click Launch-LunaCaption.cmd."

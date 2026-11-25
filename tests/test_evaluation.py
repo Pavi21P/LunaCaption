@@ -10,9 +10,9 @@ import pytest
 import requests
 from PIL import Image
 
-from lumacaption import evaluate
-from lumacaption.engine import ModelUnavailableError
-from lumacaption.evaluation import (
+from lunacaption import evaluate
+from lunacaption.engine import ModelUnavailableError
+from lunacaption.evaluation import (
     PROTOCOL,
     EvaluationError,
     build_manifest,

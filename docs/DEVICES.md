@@ -1,14 +1,14 @@
 # Compute devices
 
-CPU remains the default. The source desktop's Compute device selector and the CLI
+CPU is the default. The desktop app's Compute device selector and the CLI
 --device option accept cpu or cuda. CUDA is an experimental opt-in path for an
 environment with compatible NVIDIA hardware and CUDA-enabled PyTorch. It has not
 been exercised on a real GPU in this project.
 
 ~~~powershell
-.\Launch-LumaCaption.cmd --device cpu
-.\Launch-LumaCaption.cmd --device cuda
-.\Launch-LumaCaption.cmd "C:\Photos\photo.jpg" --offline --device cuda --output captions.json
+.\Launch-LunaCaption.cmd --device cpu
+.\Launch-LunaCaption.cmd --device cuda
+.\Launch-LunaCaption.cmd "C:\Photos\photo.jpg" --offline --device cuda --output captions.json
 ~~~
 
 With no image arguments the launcher opens the desktop using the selected device.
@@ -17,9 +17,9 @@ app window; sessions and recovery files retain their existing format and do not
 store a machine's device preference. Opening a session leaves the current choice
 unchanged. Restarting without --device uses CPU again.
 
-The header shows the actual device after model preparation, including CPU FALLBACK.
-CLI status reports the chosen device and any fallback reason. The selector remains
-on the requested choice so the difference is visible. Switching the requested device
+The status bar reports the actual device once the model is ready, and the batch
+summary repeats the fallback reason if CUDA fell back to CPU. CLI status reports
+the chosen device and any fallback reason. The selector stays on the requested choice. Switching the requested device
 between batches releases the previous engine before loading another. A fallback
 engine is reused across later batches with the same requested device.
 
@@ -51,14 +51,10 @@ the validated CPU environment; selecting cuda does not install GPU dependencies.
 Simulated tests exercise routing, dtype preservation, initialization/placement
 failures, memory exhaustion, retry limits, CLI dispatch, and desktop engine reuse.
 Real offline runs cover default CPU and a CUDA request falling back to CPU, each
-with Tk worker and export checks. See [validation evidence](VALIDATION.md).
+with Tk worker and export checks.
 
 Real CUDA execution, throughput, peak GPU memory, driver compatibility, and GPU
 packaging are unverified. Do not use CPU fallback timing as a GPU benchmark.
-The evaluation runner remains fixed to CPU to preserve the LC07 protocol. The
+The evaluation runner stays on the CPU to keep its protocol fixed. The
 offline smoke script accepts --device and records requested/actual devices plus
 the fallback reason. Use fresh private report paths.
-
-The existing LC08 executable predates device selection and keyboard improvements.
-Use the current source launcher; a new named build and verification are required
-before distributing an updated executable.

@@ -20,7 +20,9 @@ from .batch import CaptionResult
 from .engine import CaptionOptions
 from .images import MAX_BATCH
 
-FORMAT = "lumacaption-session"
+FORMAT = "lunacaption-session"
+# Sessions saved before the project was renamed remain readable.
+LEGACY_FORMATS = frozenset({"lumacaption-session"})
 SCHEMA_VERSION = 1
 MAX_SESSION_BYTES = 16 * 1024 * 1024
 MAX_TEXT_LENGTH = 16_384
@@ -69,8 +71,8 @@ def _decode(document: object) -> Session:
     document = _keys(
         document, {"format", "schema_version", "app_version", "settings", "results"}, "Session"
     )
-    if document["format"] != FORMAT:
-        raise SessionError("This is not a LumaCaption session file.")
+    if document["format"] != FORMAT and document["format"] not in LEGACY_FORMATS:
+        raise SessionError("This is not a LunaCaption session file.")
     if type(document["schema_version"]) is not int or document["schema_version"] != SCHEMA_VERSION:
         raise SessionError("Unsupported session version. This app supports version 1.")
     if not _text(document["app_version"], "App version", 128):
@@ -191,7 +193,7 @@ def save_session(session: Session, destination: Path, *, overwrite: bool = False
     document = _document(session)
     destination = Path(destination).expanduser().resolve()
     if destination.suffix.lower() != ".json":
-        raise SessionError("Choose a .json session file, such as workspace.lumacaption.json.")
+        raise SessionError("Choose a .json session file, such as workspace.lunacaption.json.")
     if any(_path_key(row.path) == _path_key(str(destination)) for row in session.results):
         raise SessionError("A session cannot replace an input image.")
     # Protect hard links and symlinks to existing input files as well.
@@ -210,7 +212,7 @@ def save_session(session: Session, destination: Path, *, overwrite: bool = False
     )
     if len(data) > MAX_SESSION_BYTES:
         raise SessionError("Session exceeds the 16 MB limit.")
-    descriptor, name = tempfile.mkstemp(prefix=".lumacaption-session-", dir=destination.parent)
+    descriptor, name = tempfile.mkstemp(prefix=".lunacaption-session-", dir=destination.parent)
     temporary = Path(name)
     try:
         with os.fdopen(descriptor, "wb") as handle:

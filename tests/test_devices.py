@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
-from lumacaption.engine import MODEL_REVISION, CaptionEngine, CaptionOptions, ModelUnavailableError
+from lunacaption.engine import MODEL_REVISION, CaptionEngine, CaptionOptions, ModelUnavailableError
 
 
 @pytest.fixture
@@ -221,16 +221,16 @@ def test_invalid_devices_rejected_before_loading(device):
 
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_cli_forwards_device_to_desktop(monkeypatch, device):
-    from lumacaption.cli import main
+    from lunacaption.cli import main
 
     calls = []
-    monkeypatch.setattr("lumacaption.desktop.main", lambda **kw: calls.append(kw))
+    monkeypatch.setattr("lunacaption.desktop.main", lambda **kw: calls.append(kw))
     assert main(["--offline", "--device", device]) == 0
     assert calls == [{"offline": True, "device": device}]
 
 
 def test_cli_cuda_request_reports_cpu_fallback(runtime, tmp_path, capsys):
-    from lumacaption.cli import main
+    from lunacaption.cli import main
 
     runtime.available = False
     photo = tmp_path / "photo.png"

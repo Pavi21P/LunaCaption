@@ -11,7 +11,7 @@ from .config import LENGTHS
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="lumacaption", description="Local image captions for Windows"
+        prog="lunacaption", description="Local image captions for Windows"
     )
     parser.add_argument("inputs", nargs="*", type=Path, help="Image files or folders")
     parser.add_argument("--recursive", action="store_true", help="Include subfolders")
@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
             status(f"Saved {len(results)} result(s) to {args.output}")
         return 1 if any(item.status == "error" for item in results) else 0
     except (ImageInputError, ModelUnavailableError, OSError, ValueError) as exc:
-        print(f"LumaCaption: {exc}", file=sys.stderr)
+        print(f"LunaCaption: {exc}", file=sys.stderr)
         return 2
     except KeyboardInterrupt:
         print("Cancelled.", file=sys.stderr)

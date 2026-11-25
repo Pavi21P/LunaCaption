@@ -1,6 +1,6 @@
-# Saved-session storage (schema 1)
+# Sessions and recovery
 
-LC01 provides storage; LC02 adds desktop Save/Open; LC03 adds local recovery; LC04 adds missing-image relinking.
+Sessions save your queue, captions, edits, and settings to a JSON file (schema 1) so you can pick up where you left off.
 
 ## Desktop behavior
 
@@ -24,7 +24,7 @@ Generation stays stopped. A pending row becomes ready for Generate; an existing 
 
 The desktop writes an atomic recovery snapshot after one second without further changes. Queue additions, edits (including paste/undo), options, retry state, and completed results trigger snapshots. Before generation begins, pending work is saved immediately. Snapshots use the same schema and size limits as manual sessions; image files and weights are not copied.
 
-Storage is %LOCALAPPDATA%\LumaCaption\recovery\autosave.lumacaption.json. If LOCALAPPDATA is absent or relative, the fallback is AppData/Local/LumaCaption/recovery under the user's home directory. The working directory is never the default. This data contains private local paths and captions and stays outside the repository.
+Storage is %LOCALAPPDATA%\LunaCaption\recovery\autosave.lunacaption.json. If LOCALAPPDATA is absent or relative, the fallback is AppData/Local/LunaCaption/recovery under the user's home directory. The working directory is never the default. This data contains private local paths and captions and stays outside the repository.
 
 At startup, choose Yes to recover or No to discard the recovery copy. Recovered edits/settings and completed/error rows are preserved; interrupted work stays pending and generation does not start itself. Recovery leaves the workspace unsaved and does not restore the old manual save destination. Use Save session to choose a permanent destination.
 
@@ -41,11 +41,11 @@ The footer shows pending/saved/error status. Write failures preserve the previou
 - `load_session(source)`: returns an independent, completely validated Session. It never opens source images, loads model weights, or starts inference.
 - `SessionError`: invalid content, unsupported schema, or limits. File-access failures remain OSError subclasses; refusing replacement raises FileExistsError.
 
-Use `workspace.lumacaption.json` by default. This filename pattern is ignored by Git. Session files contain local paths and edited text and should remain local.
+Use `workspace.lunacaption.json` by default. This filename pattern is ignored by Git. Session files contain local paths and edited text and should remain local.
 
 ## File contract
 
-Top-level fields: `format: "lumacaption-session"`, `schema_version: 1`, `app_version`, `settings`, `results`.
+Top-level fields: `format: "lunacaption-session"` (files saved as `"lumacaption-session"` by earlier versions also open), `schema_version: 1`, `app_version`, `settings`, `results`.
 
 Settings: caption `length`, integer `beams`, boolean `offline`, boolean `recursive`.
 
@@ -62,9 +62,3 @@ Limits: 1,000 images, 16 MiB encoded file, 16,384 characters per caption/generat
 Validate the entire document before creating a temporary file. Write and flush a temporary file in the destination directory, then replace atomically or publish without overwriting a concurrently created destination. Failed writes preserve an existing save and remove temporary files. Reject attempts to replace input files, including existing hard-link aliases.
 
 Do not create missing parent directories implicitly. Loading returns fresh objects and has no UI side effects. Callers should replace their active state only after load_session succeeds. Schema changes require an explicit version/migration decision.
-
-## Evidence
-
-48 focused tests cover round trips, Unicode/edits/options/status preservation, missing paths, malformed and ambiguous JSON, resource limits, concurrent destination creation, failed flush/replacement, and source-file protection. All 84 project tests and Ruff checks passed on Windows for LC01. No model download or inference rerun was needed.
-
-LC02 adds 17 desktop cases (22 desktop tests total), covering native-dialog outcomes, full workspace round trips, unsaved-work protection, invalid imports, failed saves, missing-image retention, busy controls, and explicit-only generation with restored options. All 101 project tests and Ruff passed; the real offline worker smoke also passed.

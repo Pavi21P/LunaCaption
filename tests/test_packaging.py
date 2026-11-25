@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from lumacaption import diagnostics, packaged
+from lunacaption import diagnostics, packaged
 
 
 @pytest.fixture
@@ -22,11 +22,11 @@ def builder():
 
 def test_frozen_probe_uses_console_sibling_not_python_m(monkeypatch):
     monkeypatch.setattr(sys, "frozen", True, raising=False)
-    monkeypatch.setattr(sys, "executable", r"C:\folder with spaces\LumaCaption.exe")
+    monkeypatch.setattr(sys, "executable", r"C:\folder with spaces\LunaCaption.exe")
     expected = {name: True for name in ("Tk", *diagnostics.DEPENDENCIES)}
 
     def run(command, **kwargs):
-        assert command == [r"C:\folder with spaces\LumaCaption-CLI.exe", "--_runtime-probe"]
+        assert command == [r"C:\folder with spaces\LunaCaption-CLI.exe", "--_runtime-probe"]
         assert kwargs["timeout"] == 45
         return SimpleNamespace(returncode=0, stdout=json.dumps(expected), stderr="")
 
@@ -38,19 +38,19 @@ def test_frozen_cache_failure_points_to_executable(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     result = diagnostics.check_cache(tmp_path)
     assert not result.ok
-    assert "LumaCaption-CLI.exe --download-model" in result.detail
-    assert "Launch-LumaCaption.cmd" not in result.detail
+    assert "LunaCaption-CLI.exe --download-model" in result.detail
+    assert "Launch-LunaCaption.cmd" not in result.detail
 
 
 def test_packaged_probe_dispatch_does_not_relaunch_cli(monkeypatch, capsys):
     monkeypatch.setattr(diagnostics, "_probe_runtime", lambda: {"Tk": True})
-    monkeypatch.setitem(sys.modules, "lumacaption.cli", None)
+    monkeypatch.setitem(sys.modules, "lunacaption.cli", None)
     assert packaged.main(["--_runtime-probe"]) == 0
     assert json.loads(capsys.readouterr().out) == {"Tk": True}
 
 
 def test_packaged_cli_preserves_arguments_and_exit_status(monkeypatch):
-    from lumacaption import cli
+    from lunacaption import cli
 
     seen = []
     monkeypatch.setattr(cli, "main", lambda args: seen.append(args) or 7)
@@ -111,14 +111,14 @@ def test_build_metadata_omits_private_editable_url(builder, monkeypatch, tmp_pat
     distribution = SimpleNamespace(
         version="0.1.0",
         read_text=lambda name: {
-            "METADATA": "Name: lumacaption\nVersion: 0.1.0\n",
+            "METADATA": "Name: lunacaption\nVersion: 0.1.0\n",
             "WHEEL": "Wheel-Version: 1.0\n",
             "direct_url.json": '{"url":"file:///private/source"}',
         }.get(name),
     )
     monkeypatch.setattr(builder.metadata, "distribution", lambda _: distribution)
     builder.stage_metadata(tmp_path, "0.1.0")
-    files = list((tmp_path / "lumacaption-0.1.0.dist-info").iterdir())
+    files = list((tmp_path / "lunacaption-0.1.0.dist-info").iterdir())
     assert {p.name for p in files} == {"METADATA", "WHEEL"}
     assert all("private" not in p.read_text() for p in files)
 
@@ -175,16 +175,16 @@ def test_hash_failure_identifies_artifact_without_private_root(
 def test_hash_failure_exits_without_manifest_or_retry(builder, monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(builder, "ROOT", tmp_path)
     output = tmp_path / "dist" / "fixture"
-    bundle = output / "LumaCaption"
+    bundle = output / "LunaCaption"
     bundle.mkdir(parents=True)
     stage = tmp_path / "stage"
     (stage / "licenses").mkdir(parents=True)
-    for name in ("LumaCaption.exe", "LumaCaption-CLI.exe"):
+    for name in ("LunaCaption.exe", "LunaCaption-CLI.exe"):
         (bundle / name).write_bytes(b"fixture, not an executable")
     (tmp_path / "packaging").mkdir()
     for name in ("LICENSE", "THIRD_PARTY_NOTICES.md", "packaging/README-Windows.md"):
         (tmp_path / name).write_text("fixture")
-    failed = bundle / "LumaCaption.exe"
+    failed = bundle / "LunaCaption.exe"
     original_digest = builder.hashlib.file_digest
     attempts = []
 
@@ -199,7 +199,7 @@ def test_hash_failure_exits_without_manifest_or_retry(builder, monkeypatch, tmp_
     monkeypatch.setattr(sys, "argv", ["build_windows.py", "--name", "fixture"])
     assert builder.main() == 1
     error = capsys.readouterr().err
-    assert "dist/fixture/LumaCaption/LumaCaption.exe" in error
+    assert "dist/fixture/LunaCaption/LunaCaption.exe" in error
     assert "OS error 22" in error and "unverified" in error
     assert str(tmp_path) not in error
     assert len(attempts) == 1

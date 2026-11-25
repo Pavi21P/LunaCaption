@@ -1,8 +1,6 @@
 # Keyboard controls
 
-The source desktop supports the shortcuts below. Start it with Launch-LumaCaption.cmd.
-The existing LC08 executable folder predates LC10; rebuild with a new BuildName to
-include these changes. See [packaging](PACKAGING.md).
+The desktop app supports the shortcuts below. Press F1 in the app to see them.
 
 | Key | Action |
 | --- | --- |
@@ -46,9 +44,9 @@ remains mapped and inside the client height at the 960 by 680 minimum window siz
 
 These checks do not replace a person's keyboard-only walkthrough, testing native
 file-dialog navigation, screen-reader announcements, high-contrast mode, high-DPI
-layouts, or manual visual acceptance. Those observations belong to LC11.
+layouts, or manual visual acceptance; use the walkthrough below for those.
 
-## Manual walkthrough for LC11
+## Manual accessibility walkthrough
 
 1. Start the source app. Use Tab and Shift+Tab to reach each enabled control.
    Check that focus is visible and labels make sense with Windows assistive technology.

@@ -11,15 +11,15 @@ from .sessions import Session, load_session, save_session
 def default_recovery_directory() -> Path:
     base = os.environ.get("LOCALAPPDATA")
     if base and Path(base).is_absolute():
-        return Path(base) / "LumaCaption" / "recovery"
-    return Path.home() / "AppData" / "Local" / "LumaCaption" / "recovery"
+        return Path(base) / "LunaCaption" / "recovery"
+    return Path.home() / "AppData" / "Local" / "LunaCaption" / "recovery"
 
 
 class RecoveryStore:
     """Hold an OS lock until close; process exit releases it after a crash."""
 
     def __init__(self, directory: Path) -> None:
-        self.path = directory / "autosave.lumacaption.json"
+        self.path = directory / "autosave.lunacaption.json"
         directory.mkdir(parents=True, exist_ok=True)
         self._lock = (directory / "recovery.lock").open("a+b")
         try:

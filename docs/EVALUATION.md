@@ -1,10 +1,10 @@
 # Caption evaluation protocol
 
-Protocol: LumaCaption-eval-v1
+Protocol: LumaCaption-eval-v1 (the identifier predates the rename to LunaCaption and is kept unchanged because it is hashed into the image selection)
 
 Recorded: 2026-11-05
 
-Status: implemented by the LC07 freeze/run CLI. See [validation evidence](VALIDATION.md) for measured results and remaining human review.
+Status: implemented by `python -m lunacaption.evaluate`. See [baseline results](#baseline-results-2026-11-05) below; human review is still pending.
 
 ## Purpose and limits
 
@@ -14,7 +14,7 @@ The test subset is held out from this project's tuning. Overlap with upstream BL
 
 ## Dataset, rights, and storage
 
-Use the locally supplied Flickr8k images, raw Flickr8k.token.txt references, and official train/dev/test lists. The [publisher's dataset page and terms](https://hockenmaier.cs.illinois.edu/Framing_Image_Description/KCCA.html) provide the material for non-commercial research and educational purposes, retain the original image owners' rights, and require respecting Flickr's terms. This protocol does not grant redistribution or commercial-use rights. Dataset material is outside LumaCaption's MIT license.
+Use the locally supplied Flickr8k images, raw Flickr8k.token.txt references, and official train/dev/test lists. The [publisher's dataset page and terms](https://hockenmaier.cs.illinois.edu/Framing_Image_Description/KCCA.html) provide the material for non-commercial research and educational purposes, retain the original image owners' rights, and require respecting Flickr's terms. This protocol does not grant redistribution or commercial-use rights. Dataset material is outside LunaCaption's MIT license.
 
 Attribute: Micah Hodosh, Peter Young, and Julia Hockenmaier (2013), *Framing Image Description as a Ranking Task: Data, Models and Evaluation Metrics*, Journal of Artificial Intelligence Research 47, 853-899.
 
@@ -23,7 +23,7 @@ Keep images, references, manifests, generated captions, and individual review re
 ## Deterministic selection
 
 1. Read Flickr_8k.trainImages.txt, Flickr_8k.devImages.txt, and Flickr_8k.testImages.txt as UTF-8 with optional BOM. Strip surrounding whitespace and ignore blank lines; preserve case. Require basename-only identifiers, no path separators, absolute paths, or traversal components. Reject duplicates and overlap between splits.
-2. Before inspecting test images, freeze an exclusion list of images previously used for smoke tests or manual tuning, with reasons. Include identifiers from existing local offline reports. The LC06 audit found two known smoke-test images; neither occurs in dev/test. Record any additional known prior use before freezing.
+2. Before inspecting test images, freeze an exclusion list of images previously used for smoke tests or manual tuning, with reasons. Include identifiers from existing local offline reports. A metadata audit found two known smoke-test images; neither occurs in dev/test. Record any additional known prior use before freezing.
 3. For each remaining identifier, calculate SHA-256 of UTF-8 text consisting of protocol identifier, split name (test or dev), and basename, joined by literal vertical bars. Example input shape: LumaCaption-eval-v1|test|<basename>. Sort by hexadecimal digest ascending, then basename ascending to break ties.
 4. Take the first 50 test identifiers and first 10 dev identifiers in that order. Dev is for runner calibration and warmup; do not tune against test results. Do not select by caption quality, image availability, or perceived difficulty.
 5. Parse raw references as identifier#reference-number, a tab, then caption. Each selected image must have exactly five nonempty references numbered 0 through 4, without duplicate identifiers/numbers. Malformed selected references invalidate the evaluation; do not substitute lemmatized captions or legacy expert/crowd judgments.
@@ -31,7 +31,7 @@ Keep images, references, manifests, generated captions, and individual review re
 
 For selection/exclusion digests, hash UTF-8 identifiers joined with LF plus a final LF; use rank order for selections and ascending basename order for exclusions. Record the frozen manifest's byte hash in every report. Supply image/reference roots at runtime; public reports must not expose local paths.
 
-The 2026-11-05 metadata audit found disjoint 6,000/1,000/1,000 train/dev/test lists. All 1,000 test identifiers had five references and existing image paths. All selected 50 test and 10 dev identifiers had files and references 0-4. No images were decoded and no inference ran. The aggregate audit is retained locally; LC07 must freeze the complete manifest and verify file hashes.
+The 2026-11-05 metadata audit found disjoint 6,000/1,000/1,000 train/dev/test lists. All 1,000 test identifiers had five references and existing image paths. All selected 50 test and 10 dev identifiers had files and references 0-4. No images were decoded and no inference ran. The run freezes the complete manifest and verifies file hashes.
 
 ## Fixed generation and execution
 
@@ -89,7 +89,7 @@ Also record hallucination as yes/no/uncertain and a short explanation. Judge vis
 
 Record reviewer pseudonym, review time, and rubric version. Report reviewed/successful coverage, axis distributions, hallucination counts, and acceptable/reviewed count. Unreviewed rows are not zero ratings. A second independent reviewer is optional; report disagreements explicitly if used, and do not claim inter-rater agreement from one reviewer. Fifty images support a modest local baseline, not broad population or superiority claims.
 
-## LC07 implementation acceptance
+## Implementation requirements
 
 - A CLI creates/validates a private frozen manifest and unique run directory, then uses the shared offline engine without changing source files.
 - Synthetic cases verify stable selection, exclusions, malformed/duplicate references, clipped counts, brevity penalty, short/empty hypotheses, tokenization, LCS, and five-reference aggregation.
@@ -97,17 +97,17 @@ Record reviewer pseudonym, review time, and rubric version. Report reviewed/succ
 - Run the real baseline when local data/cache are available. Publish only checked aggregates, exact configuration, failures, and limitations. Human-review fields remain pending until a person supplies ratings.
 - Update this protocol/version before changing selection, tokenizer, metrics, or generation settings; retain previous manifests and reports.
 
-See [validation evidence](VALIDATION.md), [execution plan](PLAN.md), and [third-party notices](../THIRD_PARTY_NOTICES.md).
+See also the [third-party notices](../THIRD_PARTY_NOTICES.md).
 
 ## Running the implementation on Windows
 
-From the LumaCaption project directory, use the installed virtual environment. The CLI restricts outputs to .local/evaluation/v1/ and refuses to overwrite an existing manifest or run directory. Raw content stays in these ignored files; terminal output contains progress and aggregate scores only.
+From the project directory, use the installed virtual environment. The CLI restricts outputs to .local/evaluation/v1/ and refuses to overwrite an existing manifest or run directory. Raw content stays in these ignored files; terminal output contains progress and aggregate scores only.
 
 Freeze before generation, including all previous smoke reports and any additional known manual-use exclusions. The optional --exclusions file is a private JSON object mapping image basenames to short reasons. This command uses the supplied sibling dataset directories:
 
 ~~~powershell
 $freezeArgs = @(
-    "-m", "lumacaption.evaluate", "freeze",
+    "-m", "lunacaption.evaluate", "freeze",
     "--text-root", "..\Flickr8k_text",
     "--image-root", "..\Flickr8k_Dataset\Flicker8k_Dataset",
     "--output", ".local\evaluation\v1\manifest.json"
@@ -122,7 +122,7 @@ Inspect the private manifest metadata and exclusion reasons before starting. Do 
 
 ~~~powershell
 $runArgs = @(
-    "-m", "lumacaption.evaluate", "run",
+    "-m", "lunacaption.evaluate", "run",
     "--manifest", ".local\evaluation\v1\manifest.json",
     "--image-root", "..\Flickr8k_Dataset\Flicker8k_Dataset",
     "--cache-dir", ".cache\models",
@@ -136,3 +136,23 @@ Each run copies the exact frozen manifest and writes report.json incrementally u
 review-template.json contains successful captions in the specified review order, with every human-rating field blank. Save actual human ratings in a separate private copy; the runner does not infer ratings or import completed reviews. Its human-review summary therefore remains pending. A later reviewed summary must follow the rubric above.
 
 Reports include source-file hashes alongside the Git commit/dirty flag so a run made before the checkpoint commit can be matched to its final source. Record protocol and dependency hashes too. Review aggregate values before copying them into public documentation; never publish the raw report, manifest, reference captions, or review template.
+
+## Baseline results (2026-11-05)
+
+The protocol above was run locally with the pinned BLIP base model on CPU (Standard/35 tokens, three beams, no sampling). Only the first dev image was used for warmup; nothing was tuned.
+
+| Measure | Result |
+| --- | --- |
+| Completed test captions | 50/50 |
+| Image failures / not processed | 0 / 0 |
+| Network attempts (blocked) | 0 |
+| Corpus BLEU-1 | 57.60 |
+| Corpus BLEU-4 | 21.46 |
+| Mean best-reference ROUGE-L F1 | 47.21 |
+| Model preparation | 18.1 s |
+| Dev warmup | 15.5 s |
+| Total test wall time | 222.3 s |
+| Per-image load + inference, median / p95 | 4.12 / 5.71 s |
+| Human reviews | 0/50, pending |
+
+Scores use the 0-100 scale defined above and are not accuracy percentages. The subset is small, upstream training-data overlap is unknown, and there is no controlled comparison with another model. Environment: Windows, Intel Core i5-7200U at 2.50 GHz, four Torch threads, Python 3.11.9, Pillow 12.3.0, torch 2.15.0, transformers 4.57.6. Timings describe this one run and are not a performance benchmark. Manifest SHA-256: dbc2eacc8917657dce0ce727a51a855c70a0bad767bf0c6353128dc96692535b.

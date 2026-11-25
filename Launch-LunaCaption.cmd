@@ -6,10 +6,10 @@ if not exist ".venv\Scripts\python.exe" (
     pause
     exit /b 1
 )
-set "LUMACAPTION_CACHE=%~dp0.cache\models"
-".venv\Scripts\python.exe" -m lumacaption %*
+set "LUNACAPTION_CACHE=%~dp0.cache\models"
+".venv\Scripts\python.exe" -m lunacaption %*
 if errorlevel 1 (
     echo.
-    echo LumaCaption could not start. See the message above.
+    echo LunaCaption could not start. See the message above.
     pause
 )

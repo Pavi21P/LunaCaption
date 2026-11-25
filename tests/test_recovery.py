@@ -5,14 +5,14 @@ import sys
 
 import pytest
 
-from lumacaption.batch import CaptionResult
-from lumacaption.recovery import RecoveryStore, default_recovery_directory
-from lumacaption.sessions import Session, SessionError
+from lunacaption.batch import CaptionResult
+from lunacaption.recovery import RecoveryStore, default_recovery_directory
+from lunacaption.sessions import Session, SessionError
 
 
 def test_default_location_uses_local_appdata(tmp_path, monkeypatch):
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
-    assert default_recovery_directory() == tmp_path / "LumaCaption" / "recovery"
+    assert default_recovery_directory() == tmp_path / "LunaCaption" / "recovery"
 
 
 def test_relative_environment_path_never_uses_working_directory(monkeypatch):
@@ -20,7 +20,7 @@ def test_relative_environment_path_never_uses_working_directory(monkeypatch):
 
     monkeypatch.setenv("LOCALAPPDATA", "relative")
     assert default_recovery_directory() == (
-        Path.home() / "AppData" / "Local" / "LumaCaption" / "recovery"
+        Path.home() / "AppData" / "Local" / "LunaCaption" / "recovery"
     )
 
 
@@ -76,11 +76,11 @@ def test_failed_atomic_write_preserves_previous_copy(tmp_path, monkeypatch):
         def fail(*args):
             raise OSError("disk full")
 
-        monkeypatch.setattr("lumacaption.sessions.os.replace", fail)
+        monkeypatch.setattr("lunacaption.sessions.os.replace", fail)
         with pytest.raises(OSError, match="disk full"):
             store.save(Session(offline=False))
         assert store.path.read_bytes() == original
-        assert not list(tmp_path.glob(".lumacaption-session-*"))
+        assert not list(tmp_path.glob(".lunacaption-session-*"))
     finally:
         store.close()
 
@@ -89,8 +89,8 @@ def test_process_exit_releases_lock_and_leaves_recoverable_data(tmp_path):
     script = """
 import os, sys
 from pathlib import Path
-from lumacaption.recovery import RecoveryStore
-from lumacaption.sessions import Session
+from lunacaption.recovery import RecoveryStore
+from lunacaption.sessions import Session
 store = RecoveryStore(Path(sys.argv[1]))
 store.save(Session(offline=True))
 os._exit(7)
@@ -110,7 +110,7 @@ def test_live_other_process_cannot_acquire_lock(tmp_path):
         script = """
 import sys
 from pathlib import Path
-from lumacaption.recovery import RecoveryStore
+from lunacaption.recovery import RecoveryStore
 try:
     store = RecoveryStore(Path(sys.argv[1]))
 except OSError:

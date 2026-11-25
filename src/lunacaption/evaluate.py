@@ -1,4 +1,4 @@
-"""Private, offline evaluation CLI: python -m lumacaption.evaluate --help."""
+"""Private, offline evaluation CLI: python -m lunacaption.evaluate --help."""
 
 from __future__ import annotations
 
@@ -133,7 +133,7 @@ def environment() -> dict:
         "protocol_sha256": digest(PROJECT_ROOT / "docs" / "EVALUATION.md"),
         "lock_sha256": digest(PROJECT_ROOT / "requirements-lock.txt"),
         "source_sha256": {
-            p.name: digest(p) for p in sorted((PROJECT_ROOT / "src" / "lumacaption").glob("*.py"))
+            p.name: digest(p) for p in sorted((PROJECT_ROOT / "src" / "lunacaption").glob("*.py"))
         },
     }
 

@@ -9,9 +9,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from lumacaption import diagnostics as diag
-from lumacaption.cli import main
-from lumacaption.config import MODEL_ID, MODEL_REVISION
+from lunacaption import diagnostics as diag
+from lunacaption.cli import main
+from lunacaption.config import MODEL_ID, MODEL_REVISION
 
 SECRET = "PRIVATE_PATH_AND_TOKEN"
 RUNTIME = dict.fromkeys(["Tk", *diag.DEPENDENCIES], True)
@@ -148,7 +148,7 @@ def test_python_requirements(monkeypatch, version, bits, ok):
 
 def test_runtime_probe_discards_startup_noise_and_stderr(monkeypatch):
     def run(command, **options):
-        assert command == [sys.executable, "-m", "lumacaption.diagnostics", "--probe"]
+        assert command == [sys.executable, "-m", "lunacaption.diagnostics", "--probe"]
         assert options["capture_output"] and options["timeout"] == 45
         return SimpleNamespace(
             returncode=0, stdout=SECRET + "\n" + json.dumps(RUNTIME), stderr=SECRET
@@ -243,8 +243,8 @@ def test_successful_diagnostics_do_not_import_engine(versions, cached, monkeypat
     monkeypatch.setattr(diag, "default_cache", lambda: directory)
     monkeypatch.setattr(diag, "check_runtime", lambda: RUNTIME)
     # Even with unavailable backend imports, dispatch stays entirely in diagnostics.
-    monkeypatch.setitem(sys.modules, "lumacaption.engine", None)
-    monkeypatch.setitem(sys.modules, "lumacaption.batch", None)
+    monkeypatch.setitem(sys.modules, "lunacaption.engine", None)
+    monkeypatch.setitem(sys.modules, "lunacaption.batch", None)
     assert main(["--diagnose"]) == 0
     output = capsys.readouterr().out
     assert "[OK] Model cache:" in output and "No downloads or model loading" in output
@@ -265,18 +265,18 @@ import sys
 sys.modules["PIL"] = None
 sys.modules["torch"] = None
 sys.modules["transformers"] = None
-from lumacaption.cli import main
-import lumacaption.diagnostics as diagnostics
+from lunacaption.cli import main
+import lunacaption.diagnostics as diagnostics
 diagnostics.run_diagnostics = lambda: 0
 assert main(["--diagnose"]) == 0
-assert "lumacaption.engine" not in sys.modules
+assert "lunacaption.engine" not in sys.modules
 """
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, timeout=15)
     assert result.returncode == 0, result.stderr.decode(errors="replace")
 
 
 def test_engine_reexports_shared_configuration():
-    from lumacaption import config, engine
+    from lunacaption import config, engine
 
     assert engine.MODEL_ID == config.MODEL_ID
     assert engine.MODEL_REVISION == config.MODEL_REVISION

@@ -4,6 +4,6 @@ import multiprocessing
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()
-    from lumacaption.packaged import main
+    from lunacaption.packaged import main
 
     raise SystemExit(main())

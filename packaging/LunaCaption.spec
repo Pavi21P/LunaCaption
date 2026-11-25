@@ -5,9 +5,9 @@ import os
 from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 
 root = Path(SPECPATH).parent
-stage = Path(os.environ["LUMACAPTION_BUILD_STAGE"])
+stage = Path(os.environ["LUNACAPTION_BUILD_STAGE"])
 datas = [
-    (str(stage / "lumacaption-0.1.0.dist-info"), "lumacaption-0.1.0.dist-info"),
+    (str(stage / "lunacaption-0.1.0.dist-info"), "lunacaption-0.1.0.dist-info"),
     (str(root / "scripts" / "verify_offline.py"), "."),
 ]
 # Transformers builds lazy import maps by reading source files.
@@ -23,7 +23,7 @@ hiddenimports = [
     "transformers.models.bert.tokenization_bert",
     "transformers.models.bert.tokenization_bert_fast",
     "transformers.generation.utils",
-    "lumacaption.desktop", "lumacaption.diagnostics", "lumacaption.batch",
+    "lunacaption.desktop", "lunacaption.diagnostics", "lunacaption.batch",
     "requests.sessions", "unittest.mock",
 ]
 a = Analysis(
@@ -35,8 +35,9 @@ a = Analysis(
     noarchive=False,
 )
 pyz = PYZ(a.pure)
-gui = EXE(pyz, a.scripts, [], exclude_binaries=True, name="LumaCaption",
-          debug=False, strip=False, upx=False, console=False)
-cli = EXE(pyz, a.scripts, [], exclude_binaries=True, name="LumaCaption-CLI",
-          debug=False, strip=False, upx=False, console=True)
-COLLECT(gui, cli, a.binaries, a.datas, strip=False, upx=False, name="LumaCaption")
+icon = str(root / "packaging" / "LunaCaption.ico")
+gui = EXE(pyz, a.scripts, [], exclude_binaries=True, name="LunaCaption",
+          debug=False, strip=False, upx=False, console=False, icon=icon)
+cli = EXE(pyz, a.scripts, [], exclude_binaries=True, name="LunaCaption-CLI",
+          debug=False, strip=False, upx=False, console=True, icon=icon)
+COLLECT(gui, cli, a.binaries, a.datas, strip=False, upx=False, name="LunaCaption")

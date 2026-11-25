@@ -48,7 +48,7 @@ def export_results(
     if destination.exists() and not overwrite:
         raise FileExistsError(f"{destination.name} already exists. Choose another name.")
     # Do not create arbitrary parent trees on behalf of a mistyped path.
-    descriptor, temp_name = tempfile.mkstemp(prefix=".lumacaption-", dir=destination.parent)
+    descriptor, temp_name = tempfile.mkstemp(prefix=".lunacaption-", dir=destination.parent)
     temp_path = Path(temp_name)
     try:
         encoding = "utf-8-sig" if destination.suffix.lower() == ".csv" else "utf-8"
